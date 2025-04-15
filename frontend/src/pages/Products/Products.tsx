@@ -34,7 +34,7 @@ const Products: React.FC = () => {
         <Layout columns="1">
           <Layout.Section>
             <ProductsDataProvider>
-              {({ products, onDeleteProduct }) => {
+              {({ products, onDeleteProduct, isLoading }) => {
                 const total = products.length;
                 const productsPaginated = products.slice(
                   currentPage === 1 ? 0 : (currentPage - 1) * PAGE_SIZE,
@@ -47,6 +47,7 @@ const Products: React.FC = () => {
                       <ListMobile
                         products={products}
                         onDeleteProduct={onDeleteProduct}
+                        isLoading={isLoading}
                       />
                     }
                     desktopContent={
@@ -54,23 +55,26 @@ const Products: React.FC = () => {
                         <ListDesktop
                           products={productsPaginated}
                           onDeleteProduct={onDeleteProduct}
+                          isLoading={isLoading}
                         />
-                        <Box
-                          display="flex"
-                          alignItems="center"
-                          justifyContent="space-between"
-                        >
-                          <Text>
-                            Mostrando <strong>1</strong> -{' '}
-                            <strong>{PAGE_SIZE}</strong> elementos de{' '}
-                            <strong>{total}</strong>
-                          </Text>
-                          <Pagination
-                            activePage={currentPage}
-                            onPageChange={handlePageChange}
-                            pageCount={Math.ceil(total / PAGE_SIZE)}
-                          />
-                        </Box>
+                        {!isLoading && (
+                          <Box
+                            display="flex"
+                            alignItems="center"
+                            justifyContent="space-between"
+                          >
+                            <Text>
+                              Mostrando <strong>1</strong> -{' '}
+                              <strong>{Math.min(PAGE_SIZE, total)}</strong> elementos de{' '}
+                              <strong>{total}</strong>
+                            </Text>
+                            <Pagination
+                              activePage={currentPage}
+                              onPageChange={handlePageChange}
+                              pageCount={Math.max(1, Math.ceil(total / PAGE_SIZE))}
+                            />
+                          </Box>
+                        )}
                       </>
                     }
                   />

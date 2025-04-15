@@ -53,5 +53,33 @@ export default {
         many: 'Selecionados',
       },
     },
+    shoppers: {
+      title: 'Clientes',
+      name: 'Nome',
+      email: 'E-mail',
+      document: 'Documento',
+      remove: 'Excluir',
+      'no-content': 'Não há clientes para serem exibidos',
+      selected: {
+        single: 'Selecionado',
+        many: 'Selecionados',
+      },
+    },
+    subscriptions: {
+      title: 'Assinaturas',
+      status: 'Status',
+      value: 'Valor',
+      cycle: 'Ciclo',
+      'start-date': 'Data de início',
+      'next-due-date': 'Próximo vencimento',
+      'billing-type': 'Meio de pagamento',
+      actions: 'Ações',
+      cancel: 'Cancelar',
+      'no-content': 'Não há assinaturas para serem exibidas',
+      selected: {
+        single: 'Selecionada',
+        many: 'Selecionadas',
+      },
+    },
   },
 };

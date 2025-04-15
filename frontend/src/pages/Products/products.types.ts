@@ -42,17 +42,28 @@ interface IImage {
 
 export interface IProduct {
   id: number;
-  name: {
+  // Suporte para ambos formatos de nome (objeto ou string)
+  name: string | {
     pt?: string;
     es?: string;
   };
+  // Campos adicionais conforme retornado pela API atual
+  seller_id?: string;
+  price?: number;
+  stock?: number;
+  sku?: string;
+  description?: string;
+  categories?: string;
   variants?: IVariant[];
-  images: IImage[];
+  images?: IImage[] | null;
+  createdAt?: string;
+  updatedAt?: string;
 }
 
 export interface IProductsDataProvider {
   children: (data: {
     products: IProduct[];
     onDeleteProduct: (productId: number) => void;
+    isLoading: boolean; // Adicionando propriedade isLoading
   }) => React.ReactNode;
 }

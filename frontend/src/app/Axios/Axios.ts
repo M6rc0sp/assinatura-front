@@ -4,7 +4,8 @@ import { getSessionToken } from '@tiendanube/nexo';
 import nexo from '../NexoClient';
 
 const axios = axiosApi.create({
-  baseURL: import.meta.env.VITE_API_URL,
+  // Usar o proxy local configurado no Vite em vez da URL direta
+  baseURL: '/api',
 });
 
 axios.interceptors.request.use(

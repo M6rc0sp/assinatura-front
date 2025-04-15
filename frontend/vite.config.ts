@@ -29,4 +29,15 @@ export default defineConfig({
       '@': path.resolve(__dirname, 'src'),
     },
   },
+  // Configuração de proxy para evitar erro de Mixed Content
+  server: {
+    proxy: {
+      '/api': {
+        target: 'http://206.189.224.24:10000',
+        changeOrigin: true,
+        rewrite: (path) => path.replace(/^\/api/, ''),
+        secure: false,
+      }
+    }
+  }
 });
