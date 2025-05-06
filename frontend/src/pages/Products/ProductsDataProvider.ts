@@ -2,6 +2,7 @@ import React, { useEffect, useState } from 'react';
 import { useToast } from '@nimbus-ds/components';
 import { useFetch } from '@/hooks';
 import { IProduct, IProductsDataProvider } from './products.types';
+import { useSellerId } from '@/hooks/useSellerId/useSellerId';
 
 const ProductsDataProvider: React.FC<IProductsDataProvider> = ({
   children,
@@ -10,8 +11,7 @@ const ProductsDataProvider: React.FC<IProductsDataProvider> = ({
   const { request } = useFetch();
   const [products, setProduts] = useState<IProduct[]>([]);
   const [isLoading, setIsLoading] = useState<boolean>(true);
-
-  useEffect(() => onGetProducts(), []);
+  const sellerId = useSellerId();
 
   // Função para verificar se a resposta é HTML
   const isHtmlResponse = (content: any): boolean => {
@@ -24,15 +24,17 @@ const ProductsDataProvider: React.FC<IProductsDataProvider> = ({
   };
 
   const onGetProducts = () => {
+    if (!sellerId) return;
+    
     setIsLoading(true);
     request({
-      url: `/app/products`, // Corrigido: adicionado o prefixo /app/
+      url: `/app/seller/${sellerId}/products`, // Nova rota com seller_id (singular)
       method: 'GET',
     })
-      .then((response) => {
+      .then((response: any) => {
         // Verificando se a resposta é HTML em vez de JSON
         if (isHtmlResponse(response.content)) {
-          console.error('API retornou HTML em vez de JSON:', response.content.substring(0, 100) + '...');
+          console.error('API retornou HTML em vez de JSON:', (response.content as string).substring(0, 100) + '...');
           setProduts([]);
           addToast({
             type: 'danger',
@@ -59,7 +61,7 @@ const ProductsDataProvider: React.FC<IProductsDataProvider> = ({
           console.error('Formato de resposta inesperado:', response);
           setProduts([]);
           addToast({
-            type: 'warning',
+            type: 'danger',
             text: 'Formato de dados inesperado ao carregar produtos',
             duration: 4000,
             id: 'error-products-format',
@@ -81,9 +83,14 @@ const ProductsDataProvider: React.FC<IProductsDataProvider> = ({
       });
   };
 
+  useEffect(() => {
+    if (sellerId) onGetProducts();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [sellerId]);
+
   const onDeleteProduct = (productId: number) => {
     request({
-      url: `/app/products/${productId}`, // Corrigido: adicionado o prefixo /app/
+      url: `/app/seller/${sellerId}/products/${productId}`,
       method: 'DELETE',
     })
       .then(() => {

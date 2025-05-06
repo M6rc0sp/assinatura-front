@@ -1,7 +1,8 @@
 import React from 'react';
 import { useTranslation } from 'react-i18next';
+import { useNavigate } from 'react-router-dom';
 import { Button, Icon, Badge, Text, Box, Table } from '@nimbus-ds/components';
-import { TrashIcon } from '@nimbus-ds/icons';
+import { TrashIcon, EyeIcon } from '@nimbus-ds/icons';
 import { ISubscription } from '../../subscriptions.types';
 import { STATUS_COLORS, STATUS_LABELS, CYCLE_LABELS, BILLING_TYPE_LABELS } from '../../subscriptions.definitions';
 
@@ -30,7 +31,12 @@ const formatDate = (dateString: string): string => {
 
 const ListDesktop: React.FC<Props> = ({ subscriptions, onCancelSubscription, isLoading }) => {
   const { t } = useTranslation('translations');
+  const navigate = useNavigate();
   
+  const handleViewOrder = (subscriptionId: number) => {
+    navigate(`/orders?subscription=${subscriptionId}`);
+  };
+
   if (isLoading) {
     return (
       <Table>
@@ -111,18 +117,28 @@ const ListDesktop: React.FC<Props> = ({ subscriptions, onCancelSubscription, isL
             <Table.Cell>{formatDate(subscription.next_due_date)}</Table.Cell>
             <Table.Cell>{BILLING_TYPE_LABELS[subscription.billing_type || 'unknown'] || 'Desconhecido'}</Table.Cell>
             <Table.Cell>
-              {subscription.status !== 'cancelled' && (
+              <Box display="flex" gap="2">
                 <Button
-                  appearance="danger"
-                  onClick={() => onCancelSubscription(subscription.id)}
+                  appearance="primary"
+                  onClick={() => handleViewOrder(subscription.id)}
                 >
-                  <Icon source={<TrashIcon size={16} />} color="currentColor" />
-                  <Box marginLeft="2">Cancelar</Box>
+                  <Icon source={<EyeIcon size={16} />} color="currentColor" />
+                  <Box marginLeft="2">Ver pedido</Box>
                 </Button>
-              )}
-              {subscription.status === 'cancelled' && (
-                <Text color="neutral-textLow">Cancelada</Text>
-              )}
+                
+                {subscription.status !== 'cancelled' && (
+                  <Button
+                    appearance="danger"
+                    onClick={() => onCancelSubscription(subscription.id)}
+                  >
+                    <Icon source={<TrashIcon size={16} />} color="currentColor" />
+                    <Box marginLeft="2">Cancelar</Box>
+                  </Button>
+                )}
+                {subscription.status === 'cancelled' && (
+                  <Text color="neutral-textLow">Cancelada</Text>
+                )}
+              </Box>
             </Table.Cell>
           </Table.Row>
         ))}

@@ -3,6 +3,7 @@ import { useParams } from 'react-router-dom';
 import { useToast } from '@nimbus-ds/components';
 import { useFetch } from '@/hooks';
 import { ISubscription, ISubscriptionsDataProvider } from './subscriptions.types';
+import { useSellerId } from '@/hooks/useSellerId/useSellerId';
 
 const SubscriptionsDataProvider: React.FC<ISubscriptionsDataProvider> = ({
   children,
@@ -13,10 +14,12 @@ const SubscriptionsDataProvider: React.FC<ISubscriptionsDataProvider> = ({
   const [subscriptions, setSubscriptions] = useState<ISubscription[]>([]);
   const [shopper, setShopper] = useState<{ id: number; name: string; email: string } | undefined>(undefined);
   const [isLoading, setIsLoading] = useState<boolean>(true);
+  const sellerId = useSellerId();
 
   useEffect(() => {
-    loadData();
-  }, []);
+    if (sellerId) loadData();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [sellerId]);
 
   // Função para verificar se a resposta é HTML
   const isHtmlResponse = (content: any): boolean => {
@@ -68,17 +71,19 @@ const SubscriptionsDataProvider: React.FC<ISubscriptionsDataProvider> = ({
   };
 
   const loadData = async () => {
+    if (!sellerId) return;
+    
     setIsLoading(true);
     try {
       // Se temos um ID de shopper na URL, buscamos as assinaturas desse shopper específico
       if (shopperId) {
         const [shopperResponse, subscriptionsResponse] = await Promise.all([
           request({
-            url: `/app/shoppers/${shopperId}`, 
+            url: `/app/seller/${sellerId}/shoppers/${shopperId}`, // Nova rota com seller_id
             method: 'GET',
           }),
           request({
-            url: `/app/shopper-subscriptions/shopper/${shopperId}`, // URL corrigida para usar o formato da API
+            url: `/app/seller/${sellerId}/subscriptions/shopper/${shopperId}`, // Nova rota com seller_id
             method: 'GET',
           }),
         ]);
@@ -98,7 +103,7 @@ const SubscriptionsDataProvider: React.FC<ISubscriptionsDataProvider> = ({
       } else {
         // Caso contrário, buscamos todas as assinaturas
         const response = await request({
-          url: `/app/shopper-subscriptions`, // Corrigido: adicionado o prefixo /app/ e nome da rota correto
+          url: `/app/seller/${sellerId}/subscriptions`, // Nova rota com seller_id
           method: 'GET',
         });
         
@@ -124,8 +129,10 @@ const SubscriptionsDataProvider: React.FC<ISubscriptionsDataProvider> = ({
   };
 
   const onCancelSubscription = (subscriptionId: number) => {
+    if (!sellerId) return;
+    
     request({
-      url: `/app/shopper-subscriptions/${subscriptionId}`, // Usando a rota padrão de exclusão
+      url: `/app/seller/${sellerId}/subscriptions/${subscriptionId}`, // Nova rota com seller_id
       method: 'DELETE', // Método correto para cancelar assinatura conforme a API
     })
       .then((response) => {

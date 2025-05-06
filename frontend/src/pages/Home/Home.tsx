@@ -20,6 +20,7 @@ const Home: React.FC = () => {
               <Button onClick={() => navigate('/products')}>Produtos</Button>
               <Button onClick={() => navigate('/shoppers')}>Clientes</Button>
               <Button onClick={() => navigate('/subscriptions')}>Assinaturas</Button>
+              <Button onClick={() => navigate('/orders')}>Pedidos</Button>
             </Card.Footer>
           </Card>
         </Box>

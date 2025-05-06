@@ -16,7 +16,6 @@ export interface IShopper {
 export interface IShoppersDataProvider {
   children: (data: {
     shoppers: IShopper[];
-    onDeleteShopper: (shopperId: number) => void;
     isLoading: boolean; // Adicionado isLoading como parte da interface
   }) => React.ReactNode;
 }

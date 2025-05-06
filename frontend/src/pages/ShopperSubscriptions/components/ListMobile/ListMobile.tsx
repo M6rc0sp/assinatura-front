@@ -1,7 +1,8 @@
 import React from 'react';
 import { useTranslation } from 'react-i18next';
+import { useNavigate } from 'react-router-dom';
 import { Button, Card, Icon, Badge, Text, Box, Spinner } from '@nimbus-ds/components';
-import { TrashIcon } from '@nimbus-ds/icons';
+import { TrashIcon, EyeIcon } from '@nimbus-ds/icons';
 import { ISubscription } from '../../subscriptions.types';
 import { STATUS_COLORS, STATUS_LABELS, CYCLE_LABELS, BILLING_TYPE_LABELS } from '../../subscriptions.definitions';
 
@@ -30,6 +31,11 @@ const formatDate = (dateString: string): string => {
 
 const ListMobile: React.FC<Props> = ({ subscriptions, onCancelSubscription, isLoading }) => {
   const { t } = useTranslation('translations');
+  const navigate = useNavigate();
+  
+  const handleViewOrder = (subscriptionId: number) => {
+    navigate(`/orders?subscription=${subscriptionId}`);
+  };
 
   if (isLoading) {
     return (
@@ -91,21 +97,32 @@ const ListMobile: React.FC<Props> = ({ subscriptions, onCancelSubscription, isLo
             </Box>
           </Card.Body>
           <Card.Footer>
-            {subscription.status !== 'cancelled' && (
+            <Box display="flex" flexDirection="column" gap="2" width="100%">
               <Button
-                appearance="danger"
-                onClick={() => onCancelSubscription(subscription.id)}
+                appearance="primary"
+                onClick={() => handleViewOrder(subscription.id)}
                 fullWidth
               >
-                <Icon source={<TrashIcon size={16} />} color="currentColor" />
-                <Box marginLeft="2">Cancelar assinatura</Box>
+                <Icon source={<EyeIcon size={16} />} color="currentColor" />
+                <Box marginLeft="2">Ver pedido</Box>
               </Button>
-            )}
-            {subscription.status === 'cancelled' && (
-              <Text color="neutral-textLow" textAlign="center" width="100%">
-                Assinatura cancelada
-              </Text>
-            )}
+              
+              {subscription.status !== 'cancelled' && (
+                <Button
+                  appearance="danger"
+                  onClick={() => onCancelSubscription(subscription.id)}
+                  fullWidth
+                >
+                  <Icon source={<TrashIcon size={16} />} color="currentColor" />
+                  <Box marginLeft="2">Cancelar assinatura</Box>
+                </Button>
+              )}
+              {subscription.status === 'cancelled' && (
+                <Text color="neutral-textLow" textAlign="center">
+                  Assinatura cancelada
+                </Text>
+              )}
+            </Box>
           </Card.Footer>
         </Card>
       ))}
