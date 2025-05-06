@@ -95,7 +95,9 @@ const OrdersDataProvider: React.FC<OrdersDataProviderProps> = ({ children, subsc
     return (
       <Box padding="4" display="flex" justifyContent="center" alignItems="center">
         <Spinner size="medium" />
-        <Text marginLeft="2">Carregando dados...</Text>
+        <Box marginLeft="2">
+          <Text>Carregando dados...</Text>
+        </Box>
       </Box>
     );
   }

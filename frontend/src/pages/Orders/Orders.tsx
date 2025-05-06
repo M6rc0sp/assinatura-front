@@ -1,5 +1,4 @@
 import React, { useEffect, useState } from 'react';
-import { useTranslation } from 'react-i18next';
 import { useLocation, useNavigate } from 'react-router-dom';
 import { navigateHeader } from '@tiendanube/nexo';
 import { Layout, Page } from '@nimbus-ds/patterns';
@@ -13,7 +12,6 @@ import { PAGE_SIZE } from './orders.definitions';
 import OrdersDataProvider from './OrdersDataProvider';
 
 const Orders: React.FC = () => {
-  const { t } = useTranslation('translations');
   const [currentPage, setCurrentPage] = useState<number>(1);
   const location = useLocation();
   const navigate = useNavigate();
@@ -53,7 +51,7 @@ const Orders: React.FC = () => {
       <Page.Header title={pageTitle}>
         {subscriptionId && (
           <Button 
-            appearance="default" 
+            appearance="neutral" 
             onClick={handleBackToSubscriptions}
           >
             <Icon source={<ArrowLeftIcon size={16} />} color="currentColor" />
@@ -64,7 +62,7 @@ const Orders: React.FC = () => {
       <Page.Body px={{ xs: 'none', md: '6' }}>
         <Layout columns="1">
           <Layout.Section>
-            <OrdersDataProvider subscriptionId={subscriptionId}>
+            <OrdersDataProvider subscriptionId={subscriptionId ?? undefined}>
               {({ orders, isLoading, onReload }) => {
                 const total = orders.length;
                 const ordersPaginated = orders.slice(

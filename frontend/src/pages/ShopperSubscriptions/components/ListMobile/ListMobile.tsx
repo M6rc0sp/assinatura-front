@@ -29,6 +29,36 @@ const formatDate = (dateString: string): string => {
   }
 };
 
+// Função auxiliar para normalizar o ciclo e buscar o label correto
+const getCycleLabel = (cycle: string | undefined): string => {
+  if (!cycle) return CYCLE_LABELS.unknown;
+  
+  // Normaliza para caixa alta
+  const normalizedCycle = cycle.toUpperCase();
+  
+  // Verifica se é uma chave válida do objeto CYCLE_LABELS
+  if (normalizedCycle in CYCLE_LABELS) {
+    return CYCLE_LABELS[normalizedCycle as keyof typeof CYCLE_LABELS];
+  }
+  
+  return CYCLE_LABELS.unknown;
+};
+
+// Função auxiliar para normalizar o tipo de pagamento e buscar o label correto
+const getBillingTypeLabel = (billingType: string | undefined): string => {
+  if (!billingType) return BILLING_TYPE_LABELS.unknown;
+  
+  // Normaliza para caixa alta
+  const normalizedBillingType = billingType.toUpperCase();
+  
+  // Verifica se é uma chave válida do objeto BILLING_TYPE_LABELS
+  if (normalizedBillingType in BILLING_TYPE_LABELS) {
+    return BILLING_TYPE_LABELS[normalizedBillingType as keyof typeof BILLING_TYPE_LABELS];
+  }
+  
+  return BILLING_TYPE_LABELS.unknown;
+};
+
 const ListMobile: React.FC<Props> = ({ subscriptions, onCancelSubscription, isLoading }) => {
   const { t } = useTranslation('translations');
   const navigate = useNavigate();
@@ -43,7 +73,9 @@ const ListMobile: React.FC<Props> = ({ subscriptions, onCancelSubscription, isLo
         <Card.Body>
           <Box display="flex" justifyContent="center" alignItems="center" padding="4">
             <Spinner size="medium" />
-            <Text marginLeft="2">Carregando assinaturas...</Text>
+            <Box marginLeft="2">
+              <Text>Carregando assinaturas...</Text>
+            </Box>
           </Box>
         </Card.Body>
       </Card>
@@ -63,11 +95,14 @@ const ListMobile: React.FC<Props> = ({ subscriptions, onCancelSubscription, isLo
   return (
     <>
       {subscriptions.map((subscription) => (
-        <Card key={subscription.id} marginBottom="4">
+        <Card key={subscription.id} style={{marginBottom: "16px"}}>
           <Card.Header>
             <Box display="flex" alignItems="center" justifyContent="space-between">
-              <Text fontWeight="bold">ID: {subscription.id}</Text>
-              <Badge appearance={STATUS_COLORS[subscription.status || 'unknown'] || 'neutral'}>
+              <Text fontWeight="medium">ID: {subscription.id}</Text>
+              <Badge 
+                count=""
+                appearance={STATUS_COLORS[subscription.status || 'unknown'] || 'neutral'}
+              >
                 {STATUS_LABELS[subscription.status || 'unknown'] || 'Desconhecido'}
               </Badge>
             </Box>
@@ -80,7 +115,7 @@ const ListMobile: React.FC<Props> = ({ subscriptions, onCancelSubscription, isLo
               </Box>
               <Box display="flex" justifyContent="space-between">
                 <Text>Ciclo:</Text>
-                <Text>{CYCLE_LABELS[subscription.cycle || 'unknown'] || 'Desconhecido'}</Text>
+                <Text>{getCycleLabel(subscription.cycle)}</Text>
               </Box>
               <Box display="flex" justifyContent="space-between">
                 <Text>Data de início:</Text>
@@ -92,7 +127,7 @@ const ListMobile: React.FC<Props> = ({ subscriptions, onCancelSubscription, isLo
               </Box>
               <Box display="flex" justifyContent="space-between">
                 <Text>Meio de pagamento:</Text>
-                <Text>{BILLING_TYPE_LABELS[subscription.billing_type || 'unknown'] || 'Desconhecido'}</Text>
+                <Text>{getBillingTypeLabel(subscription.billing_type)}</Text>
               </Box>
             </Box>
           </Card.Body>
@@ -101,20 +136,19 @@ const ListMobile: React.FC<Props> = ({ subscriptions, onCancelSubscription, isLo
               <Button
                 appearance="primary"
                 onClick={() => handleViewOrder(subscription.id)}
-                fullWidth
+                style={{width: "100%"}}
               >
                 <Icon source={<EyeIcon size={16} />} color="currentColor" />
-                <Box marginLeft="2">Ver pedido</Box>
+                <Box marginLeft="2">Ver pedidos desta assinatura</Box>
               </Button>
               
               {subscription.status !== 'cancelled' && (
                 <Button
                   appearance="danger"
                   onClick={() => onCancelSubscription(subscription.id)}
-                  fullWidth
+                  style={{width: "100%"}}
                 >
                   <Icon source={<TrashIcon size={16} />} color="currentColor" />
-                  <Box marginLeft="2">Cancelar assinatura</Box>
                 </Button>
               )}
               {subscription.status === 'cancelled' && (

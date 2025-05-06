@@ -1,6 +1,6 @@
-import React from "react";
-import { Box, IconButton, Table, Text, Thumbnail } from "@nimbus-ds/components";
-import { TrashIcon } from "@nimbus-ds/icons";
+import React, { useState } from "react";
+import { Box, IconButton, Table, Text, Thumbnail, Modal, Button } from "@nimbus-ds/components";
+import { TrashIcon, InfoCircleIcon } from "@nimbus-ds/icons";
 
 import { Translator } from "@/app/I18n";
 import { IProduct } from "../../products.types";
@@ -12,6 +12,8 @@ type Props = {
 };
 
 const ListDesktop: React.FC<Props> = ({ products, onDeleteProduct, isLoading }) => {
+  const [selectedProduct, setSelectedProduct] = useState<IProduct | null>(null);
+  
   // Função auxiliar para extrair o nome do produto, independente do formato
   const getProductName = (product: IProduct): string => {
     if (!product.name) return 'Produto sem nome';
@@ -21,6 +23,14 @@ const ListDesktop: React.FC<Props> = ({ products, onDeleteProduct, isLoading }) 
     }
     
     return product.name.pt || product.name.es || 'Produto sem nome';
+  };
+
+  const handleViewProductDetails = (product: IProduct) => {
+    setSelectedProduct(product);
+  };
+  
+  const handleCloseModal = () => {
+    setSelectedProduct(null);
   };
 
   // Renderização durante carregamento
@@ -43,9 +53,9 @@ const ListDesktop: React.FC<Props> = ({ products, onDeleteProduct, isLoading }) 
         </Table.Head>
         <Table.Body>
           <Table.Row>
-            <Table.Cell colSpan={2}>
+            <td colSpan={2} style={{padding: '16px', textAlign: 'center'}}>
               <Text textAlign="center">Carregando produtos...</Text>
-            </Table.Cell>
+            </td>
           </Table.Row>
         </Table.Body>
       </Table>
@@ -100,6 +110,11 @@ const ListDesktop: React.FC<Props> = ({ products, onDeleteProduct, isLoading }) 
                   justifyContent="center"
                 >
                   <IconButton
+                    onClick={() => handleViewProductDetails(product)}
+                    source={<InfoCircleIcon />}
+                    size="2rem"
+                  />
+                  <IconButton
                     onClick={() => onDeleteProduct(product.id)}
                     source={<TrashIcon />}
                     size="2rem"
@@ -110,12 +125,75 @@ const ListDesktop: React.FC<Props> = ({ products, onDeleteProduct, isLoading }) 
           ))
         ) : (
           <Table.Row>
-            <Table.Cell colSpan={2}>
+            <td colSpan={2} style={{padding: '16px', textAlign: 'center'}}>
               <Text textAlign="center">Nenhum produto encontrado</Text>
-            </Table.Cell>
+            </td>
           </Table.Row>
         )}
       </Table.Body>
+      <div style={{ position: 'relative', zIndex: 1000 }}>
+        {selectedProduct && (
+          <Modal open={!!selectedProduct} onDismiss={handleCloseModal}>
+            <Modal.Header>
+              <Text fontWeight="bold">Detalhes do Produto</Text>
+            </Modal.Header>
+            <Modal.Body>
+              <Box display="flex" flexDirection="column" gap="3">
+                <Box display="flex" alignItems="center" gap="3">
+                  {selectedProduct.images && Array.isArray(selectedProduct.images) && selectedProduct.images.length > 0 && selectedProduct.images[0]?.src ? (
+                    <Thumbnail
+                      src={selectedProduct.images[0].src}
+                      width="100px"
+                      alt={getProductName(selectedProduct)}
+                    />
+                  ) : (
+                    <Box width="100px" height="100px" backgroundColor="neutral-background" />
+                  )}
+                  
+                  <Box display="flex" flexDirection="column" gap="1">
+                    <Text fontWeight="bold">{getProductName(selectedProduct)}</Text>
+                    <Text>ID: {selectedProduct.id}</Text>
+                    {selectedProduct.external_id && (
+                      <Text>ID Externo: {selectedProduct.external_id}</Text>
+                    )}
+                  </Box>
+                </Box>
+                
+                {selectedProduct.description && (
+                  <Box display="flex" flexDirection="column" gap="1">
+                    <Text fontWeight="bold">Descrição:</Text>
+                    <Text>{typeof selectedProduct.description === 'string'
+                      ? selectedProduct.description
+                      : (selectedProduct.description as { pt?: string; es?: string })?.pt ||
+                        (selectedProduct.description as { pt?: string; es?: string })?.es ||
+                        ''}
+                    </Text>
+                  </Box>
+                )}
+                
+                {selectedProduct.price && (
+                  <Box display="flex" flexDirection="column" gap="1">
+                    <Text fontWeight="bold">Preço:</Text>
+                    <Text>{Number(selectedProduct.price).toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })}</Text>
+                  </Box>
+                )}
+                
+                {selectedProduct.sku && (
+                  <Box display="flex" flexDirection="column" gap="1">
+                    <Text fontWeight="bold">SKU:</Text>
+                    <Text>{selectedProduct.sku}</Text>
+                  </Box>
+                )}
+              </Box>
+            </Modal.Body>
+            <Modal.Footer>
+              <Button appearance="neutral" onClick={handleCloseModal}>
+                Fechar
+              </Button>
+            </Modal.Footer>
+          </Modal>
+        )}
+      </div>
     </Table>
   );
 };

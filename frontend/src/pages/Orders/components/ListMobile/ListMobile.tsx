@@ -1,5 +1,5 @@
 import React from 'react';
-import { Box, Badge, Card, Text, Divider } from '@nimbus-ds/components';
+import { Box, Badge, Card, Text } from '@nimbus-ds/components';
 import { Order } from '../../orders.types';
 import { STATUS_COLORS, STATUS_LABELS, CYCLE_LABELS } from '../../orders.definitions';
 
@@ -9,7 +9,22 @@ interface ListMobileProps {
   onReload: () => void;
 }
 
-const ListMobile: React.FC<ListMobileProps> = ({ orders, isLoading, onReload }) => {
+// Função auxiliar para normalizar o ciclo e buscar o label correto
+const getCycleLabel = (cycle: string | undefined): string => {
+  if (!cycle) return CYCLE_LABELS.unknown;
+  
+  // Normaliza para caixa alta
+  const normalizedCycle = cycle.toUpperCase();
+  
+  // Verifica se é uma chave válida do objeto CYCLE_LABELS
+  if (normalizedCycle in CYCLE_LABELS) {
+    return CYCLE_LABELS[normalizedCycle as keyof typeof CYCLE_LABELS];
+  }
+  
+  return CYCLE_LABELS.unknown;
+};
+
+const ListMobile: React.FC<ListMobileProps> = ({ orders, isLoading }) => {
   const getStatusLabel = (status: string) => {
     return STATUS_LABELS[status as keyof typeof STATUS_LABELS] || STATUS_LABELS.unknown;
   };
@@ -20,10 +35,6 @@ const ListMobile: React.FC<ListMobileProps> = ({ orders, isLoading, onReload }) 
            color === 'warning' ? 'warning' : 
            color === 'danger' ? 'danger' : 
            color === 'info' ? 'primary' : 'neutral';
-  };
-  
-  const getCycleLabel = (cycle: string) => {
-    return CYCLE_LABELS[cycle as keyof typeof CYCLE_LABELS] || CYCLE_LABELS.unknown;
   };
   
   const formatCurrency = (value: string) => {
@@ -53,18 +64,21 @@ const ListMobile: React.FC<ListMobileProps> = ({ orders, isLoading, onReload }) 
   return (
     <Box display="flex" flexDirection="column" gap="4" padding="4">
       {orders.map(order => (
-        <Card key={order.id} padding="4">
+        <Card key={order.id} padding="base">
           <Box display="flex" justifyContent="space-between" alignItems="center">
             <Text fontWeight="bold">#{order.id}</Text>
             <Badge
-              appearance="default"
-              colorScheme={getStatusColor(order.status)}
+              count=""
+              appearance={getStatusColor(order.status)}
             >
               {getStatusLabel(order.status)}
             </Badge>
           </Box>
           
-          <Divider marginY="3" />
+          <div style={{
+            borderTop: '1px solid var(--nimbus-color-border-neutral-surface)',
+            margin: '12px 0'
+          }}></div>
           
           <Box display="flex" flexDirection="column" gap="2">
             <Box display="flex" justifyContent="space-between">

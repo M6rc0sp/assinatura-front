@@ -41,6 +41,7 @@ interface IImage {
 }
 
 export interface IProduct {
+  external_id: any;
   id: number;
   // Suporte para ambos formatos de nome (objeto ou string)
   name: string | {

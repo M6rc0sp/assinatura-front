@@ -1,5 +1,5 @@
 import React from 'react';
-import { Box, Badge, Table, Text } from '@nimbus-ds/components';
+import { Badge, Table, Text } from '@nimbus-ds/components';
 import { Order } from '../../orders.types';
 import { STATUS_COLORS, STATUS_LABELS, CYCLE_LABELS } from '../../orders.definitions';
 
@@ -9,7 +9,22 @@ interface ListDesktopProps {
   onReload: () => void;
 }
 
-const ListDesktop: React.FC<ListDesktopProps> = ({ orders, isLoading, onReload }) => {
+// Função auxiliar para normalizar o ciclo e buscar o label correto
+const getCycleLabel = (cycle: string | undefined): string => {
+  if (!cycle) return CYCLE_LABELS.unknown;
+  
+  // Normaliza para caixa alta
+  const normalizedCycle = cycle.toUpperCase();
+  
+  // Verifica se é uma chave válida do objeto CYCLE_LABELS
+  if (normalizedCycle in CYCLE_LABELS) {
+    return CYCLE_LABELS[normalizedCycle as keyof typeof CYCLE_LABELS];
+  }
+  
+  return CYCLE_LABELS.unknown;
+};
+
+const ListDesktop: React.FC<ListDesktopProps> = ({ orders, isLoading }) => {
   const getStatusLabel = (status: string) => {
     return STATUS_LABELS[status as keyof typeof STATUS_LABELS] || STATUS_LABELS.unknown;
   };
@@ -20,10 +35,6 @@ const ListDesktop: React.FC<ListDesktopProps> = ({ orders, isLoading, onReload }
            color === 'warning' ? 'warning' : 
            color === 'danger' ? 'danger' : 
            color === 'info' ? 'primary' : 'neutral';
-  };
-  
-  const getCycleLabel = (cycle: string) => {
-    return CYCLE_LABELS[cycle as keyof typeof CYCLE_LABELS] || CYCLE_LABELS.unknown;
   };
 
   const formatCurrency = (value: string) => {
@@ -50,9 +61,9 @@ const ListDesktop: React.FC<ListDesktopProps> = ({ orders, isLoading, onReload }
         </Table.Head>
         <Table.Body>
           <Table.Row>
-            <Table.Cell colSpan={7}>
+            <td colSpan={7} style={{padding: '16px', textAlign: 'center'}}>
               <Text textAlign="center">Carregando pedidos...</Text>
-            </Table.Cell>
+            </td>
           </Table.Row>
         </Table.Body>
       </Table>
@@ -75,9 +86,9 @@ const ListDesktop: React.FC<ListDesktopProps> = ({ orders, isLoading, onReload }
         </Table.Head>
         <Table.Body>
           <Table.Row>
-            <Table.Cell colSpan={7}>
+            <td colSpan={7} style={{padding: '16px', textAlign: 'center'}}>
               <Text textAlign="center">Nenhum pedido encontrado</Text>
-            </Table.Cell>
+            </td>
           </Table.Row>
         </Table.Body>
       </Table>
@@ -106,8 +117,8 @@ const ListDesktop: React.FC<ListDesktopProps> = ({ orders, isLoading, onReload }
             </Table.Cell>
             <Table.Cell>
               <Badge
-                appearance="default"
-                colorScheme={getStatusColor(order.status)}
+                count=""
+                appearance={getStatusColor(order.status)}
               >
                 {getStatusLabel(order.status)}
               </Badge>

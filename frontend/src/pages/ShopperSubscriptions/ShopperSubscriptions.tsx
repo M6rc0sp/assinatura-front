@@ -1,6 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import { useNavigate, useParams } from 'react-router-dom';
-import { useTranslation } from 'react-i18next';
+import { useParams } from 'react-router-dom';
 import { navigateHeader } from '@tiendanube/nexo';
 import { Layout, Page } from '@nimbus-ds/patterns';
 import { Box, Pagination, Text, Spinner } from '@nimbus-ds/components';
@@ -12,9 +11,7 @@ import { PAGE_SIZE } from './subscriptions.definitions';
 import SubscriptionsDataProvider from './SubscriptionsDataProvider';
 
 const ShopperSubscriptions: React.FC = () => {
-  const { t } = useTranslation('translations');
   const { shopperId } = useParams();
-  const navigate = useNavigate();
   const [currentPage, setCurrentPage] = useState<number>(1);
   
   const handlePageChange = (page: number): void => {

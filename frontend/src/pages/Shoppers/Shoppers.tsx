@@ -34,12 +34,17 @@ const Shoppers: React.FC = () => {
         <Layout columns="1">
           <Layout.Section>
             <ShoppersDataProvider>
-              {({ shoppers, onDeleteShopper }) => {
+              {({ shoppers }) => {
                 const total = shoppers.length;
                 const shoppersPaginated = shoppers.slice(
                   currentPage === 1 ? 0 : (currentPage - 1) * PAGE_SIZE,
                   (currentPage - 1) * PAGE_SIZE + PAGE_SIZE,
                 );
+
+                // Esta aplicação não implementa a funcionalidade de exclusão de clientes
+                const onDeleteShopper = (id: number) => {
+                  console.log('Função de deletar shopper não implementada', id);
+                };
 
                 return (
                   <Responsive
