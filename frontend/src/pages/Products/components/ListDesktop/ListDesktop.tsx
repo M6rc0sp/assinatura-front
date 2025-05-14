@@ -45,7 +45,7 @@ const ListDesktop: React.FC<Props> = ({ products, onDeleteProduct, isLoading }) 
             <Table.Cell>
               <Box display="flex" gap="2" alignItems="center" width="100%" justifyContent="center">
                 <Text>
-                  <Translator path="products.remove" />
+                  Ações
                 </Text>
               </Box>
             </Table.Cell>
@@ -78,7 +78,7 @@ const ListDesktop: React.FC<Props> = ({ products, onDeleteProduct, isLoading }) 
               justifyContent="center"
             >
               <Text>
-                <Translator path="products.remove" />
+                <Translator path="products.actions" />
               </Text>
             </Box>
           </Table.Cell>

@@ -46,6 +46,7 @@ export default {
     products: {
       title: 'Produtos da Loja',
       name: 'Nome',
+      actions: 'Ações',
       remove: 'Excluir',
       'no-content': 'Não há produtos para serem exibidos',
       selected: {

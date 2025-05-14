@@ -1,6 +1,7 @@
 import React, { useState } from "react";
 import { Box, IconButton, Text, Thumbnail, Button, Modal } from "@nimbus-ds/components";
 import { TrashIcon, InfoCircleIcon } from "@nimbus-ds/icons";
+import { Translator } from "@/app/I18n";
 
 import { IProduct } from "../../products.types";
 import { DataList } from "@nimbus-ds/patterns";
@@ -51,6 +52,18 @@ const ListMobile: React.FC<Props> = ({ products, onDeleteProduct, isLoading }) =
 
   return (
     <DataList>
+      <DataList.Row flexDirection="row" width="100%" gap="2" style={{ fontWeight: 'bold', background: 'var(--nimbus-color-background-surfaceHighlight)' }}>
+        <Box flex="1 1 auto">
+          <Text fontWeight="bold">
+            <Translator path="products.name" />
+          </Text>
+        </Box>
+        <Box width="110px" display="flex" alignItems="center" justifyContent="center">
+          <Text fontWeight="bold">
+            <Translator path="products.actions" />
+          </Text>
+        </Box>
+      </DataList.Row>
       {products.map((product) => (
         <DataList.Row key={product.id} flexDirection="row" width="100%" gap="2">
           <Box display="flex" gap="2" flex="1 1 auto">
