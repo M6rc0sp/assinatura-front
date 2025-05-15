@@ -1,7 +1,9 @@
 import React, { useState } from "react";
-import { Box, IconButton, Text, Thumbnail, Button, Modal } from "@nimbus-ds/components";
+import { Box, IconButton, Text, Thumbnail, Button, Modal, useToast } from "@nimbus-ds/components";
 import { TrashIcon, InfoCircleIcon } from "@nimbus-ds/icons";
 import { Translator } from "@/app/I18n";
+import { getSessionToken } from '@tiendanube/nexo';
+import nexo from '@/app/NexoClient';
 
 import { IProduct } from "../../products.types";
 import { DataList } from "@nimbus-ds/patterns";
@@ -14,6 +16,7 @@ type Props = {
 
 const ListMobile: React.FC<Props> = ({ products, onDeleteProduct, isLoading }) => {
   const [selectedProduct, setSelectedProduct] = useState<IProduct | null>(null);
+  const { addToast } = useToast();
 
   // Função auxiliar para extrair o nome do produto, independente do formato
   const getProductName = (product: IProduct): string => {
@@ -32,6 +35,29 @@ const ListMobile: React.FC<Props> = ({ products, onDeleteProduct, isLoading }) =
 
   const handleCloseModal = () => {
     setSelectedProduct(null);
+  };
+
+  const handleSyncProduct = async (productId: number) => {
+    try {
+      const token = await getSessionToken(nexo);
+      const sellerId = products.find(p => p.id === productId)?.seller_id;
+      if (!sellerId) throw new Error('SellerId não encontrado');
+      const res = await fetch(`/api/sellers/${sellerId}/products/${productId}/sync`, {
+        method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${token}`,
+          'Content-Type': 'application/json',
+        },
+      });
+      const data = await res.json();
+      if (data.success) {
+        addToast({ type: 'success', text: 'Produto sincronizado com sucesso!', duration: 4000, id: `sync-success-${productId}` });
+      } else {
+        addToast({ type: 'danger', text: data.message || 'Erro ao sincronizar produto', duration: 4000, id: `sync-error-${productId}` });
+      }
+    } catch (err: any) {
+      addToast({ type: 'danger', text: err.message || 'Erro de rede ao sincronizar produto', duration: 4000, id: `sync-error-${productId}` });
+    }
   };
 
   if (isLoading) {
@@ -100,6 +126,11 @@ const ListMobile: React.FC<Props> = ({ products, onDeleteProduct, isLoading }) =
             <IconButton
               onClick={() => onDeleteProduct(product.id)}
               source={<TrashIcon />}
+              size="2rem"
+            />
+            <IconButton
+              onClick={() => handleSyncProduct(product.id)}
+              source={<InfoCircleIcon />} // Troque para um ícone de sync se disponível
               size="2rem"
             />
           </Box>
