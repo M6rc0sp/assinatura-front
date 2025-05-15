@@ -112,7 +112,69 @@ const ProductsDataProvider: React.FC<IProductsDataProvider> = ({
       });
   };
 
-  return children({ products, onDeleteProduct, isLoading });
+  const onSyncProduct = async (productId: number) => {
+    if (!sellerId) return;
+    try {
+      const response = await request({
+        url: `/app/seller/${sellerId}/products/${productId}/sync`,
+        method: 'POST',
+      });
+      const content = response.content as { success?: boolean; message?: string };
+      if (content && content.success) {
+        addToast({
+          type: 'success',
+          text: 'Produto sincronizado com sucesso!',
+          duration: 4000,
+          id: `sync-success-${productId}`,
+        });
+        onGetProducts(); // Atualiza lista após sync
+      } else {
+        addToast({
+          type: 'danger',
+          text: content && content.message ? content.message : 'Erro ao sincronizar produto',
+          duration: 4000,
+          id: `sync-error-${productId}`,
+        });
+      }
+    } catch (error: any) {
+      addToast({
+        type: 'danger',
+        text: error.message?.description ?? error.message ?? 'Erro de rede ao sincronizar produto',
+        duration: 4000,
+        id: `sync-error-${productId}`,
+      });
+    }
+  };
+
+  const onCreateProduct = async (data: { name: string; price: number; description: string }) => {
+    if (!sellerId) return;
+    setIsLoading(true);
+    try {
+      await request({
+        url: `/app/seller/${sellerId}/products`,
+        method: 'POST',
+        data,
+      });
+      addToast({
+        type: 'success',
+        text: 'Produto adicionado com sucesso!',
+        duration: 4000,
+        id: 'create-product',
+      });
+      onGetProducts();
+    } catch (error: any) {
+      addToast({
+        type: 'danger',
+        text: error.message?.description ?? error.message ?? 'Erro ao criar produto',
+        duration: 4000,
+        id: 'error-create-product',
+      });
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  return children({ products, onDeleteProduct, onSyncProduct, onCreateProduct, isLoading });
 };
 
 export default ProductsDataProvider;

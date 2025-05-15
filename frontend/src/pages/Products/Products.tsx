@@ -1,10 +1,8 @@
 import React, { useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { navigateHeader } from '@tiendanube/nexo';
-import { Box, Pagination, Text, Button, useToast, Modal, Input } from '@nimbus-ds/components';
+import { Box, Pagination, Text, Button, Modal, Input } from '@nimbus-ds/components';
 import { Layout, Page } from '@nimbus-ds/patterns';
-import { useFetch } from '@/hooks';
-import { useSellerId } from '@/hooks/useSellerId/useSellerId';
 
 import { Responsive } from '@/components';
 import { nexo } from '@/app';
@@ -22,10 +20,6 @@ const Products: React.FC = () => {
     navigateHeader(nexo, { goTo: '/', text: 'Voltar ao inicio' });
   }, []);
 
-  const { addToast } = useToast();
-  const { request } = useFetch();
-  const sellerId = useSellerId();
-  const [isCreating, setIsCreating] = useState(false);
   const [showModal, setShowModal] = useState(false);
   const [form, setForm] = useState({ name: '', price: '', description: '' });
 
@@ -37,40 +31,6 @@ const Products: React.FC = () => {
 
   const handleFormChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
     setForm({ ...form, [e.target.name]: e.target.value });
-  };
-
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!sellerId) return;
-    setIsCreating(true);
-    try {
-      await request({
-        url: `/app/seller/${sellerId}/products`,
-        method: 'POST',
-        data: {
-          name: form.name,
-          price: Number(form.price),
-          description: form.description,
-        },
-      });
-      addToast({
-        type: 'success',
-        text: t('home.second-card.create-products', 'Produto adicionado com sucesso!'),
-        duration: 4000,
-        id: 'create-product',
-      });
-      setCurrentPage(1);
-      closeModal();
-    } catch (error: any) {
-      addToast({
-        type: 'danger',
-        text: error.message?.description ?? error.message ?? 'Erro ao criar produto',
-        duration: 4000,
-        id: 'error-create-product',
-      });
-    } finally {
-      setIsCreating(false);
-    }
   };
 
   return (
@@ -91,100 +51,115 @@ const Products: React.FC = () => {
                 {t('home.second-card.create-products', 'Adicionar produto')}
               </Button>
             </Box>
-            <Modal open={showModal} onDismiss={closeModal}>
-              <Modal.Header>
-                <Text fontWeight="bold">Adicionar Produto</Text>
-              </Modal.Header>
-              <form onSubmit={handleSubmit}>
-                <Modal.Body>
-                  <Box display="flex" flexDirection="column" gap="4">
-                    <Box>
-                      <Text fontWeight="medium">Nome</Text>
-                      <Input
-                        name="name"
-                        value={form.name}
-                        onChange={handleFormChange}
-                        required
-                      />
-                    </Box>
-                    <Box>
-                      <Text fontWeight="medium">Preço</Text>
-                      <Input
-                        name="price"
-                        value={form.price}
-                        onChange={handleFormChange}
-                        type="number"
-                        min="0"
-                        required
-                      />
-                    </Box>
-                    <Box>
-                      <Text fontWeight="medium">Descrição</Text>
-                      <textarea
-                        name="description"
-                        value={form.description}
-                        onChange={handleFormChange}
-                        rows={3}
-                        style={{ width: '100%', padding: 8, borderRadius: 4, border: '1px solid #ccc', resize: 'vertical' }}
-                      />
-                    </Box>
-                  </Box>
-                </Modal.Body>
-                <Modal.Footer>
-                  <Button appearance="primary" type="submit" disabled={isCreating}>
-                    {isCreating ? 'Salvando...' : 'Salvar'}
-                  </Button>
-                  <Button appearance="neutral" onClick={closeModal} type="button">
-                    Cancelar
-                  </Button>
-                </Modal.Footer>
-              </form>
-            </Modal>
             <ProductsDataProvider>
-              {({ products, onDeleteProduct, isLoading }) => {
+              {({ products, onDeleteProduct, onSyncProduct, onCreateProduct, isLoading }) => {
                 const total = products.length;
                 const productsPaginated = products.slice(
                   currentPage === 1 ? 0 : (currentPage - 1) * PAGE_SIZE,
                   (currentPage - 1) * PAGE_SIZE + PAGE_SIZE,
                 );
 
+                const handleSubmit = async (e: React.FormEvent) => {
+                  e.preventDefault();
+                  await onCreateProduct({
+                    name: form.name,
+                    price: Number(form.price),
+                    description: form.description,
+                  });
+                  setCurrentPage(1);
+                  closeModal();
+                };
+
                 return (
-                  <Responsive
-                    mobileContent={
-                      <ListMobile
-                        products={products}
-                        onDeleteProduct={onDeleteProduct}
-                        isLoading={isLoading}
-                      />
-                    }
-                    desktopContent={
-                      <>
-                        <ListDesktop
-                          products={productsPaginated}
+                  <>
+                    <Modal open={showModal} onDismiss={closeModal}>
+                      <Modal.Header>
+                        <Text fontWeight="bold">Adicionar Produto</Text>
+                      </Modal.Header>
+                      <form onSubmit={handleSubmit}>
+                        <Modal.Body>
+                          <Box display="flex" flexDirection="column" gap="4">
+                            <Box>
+                              <Text fontWeight="medium">Nome</Text>
+                              <Input
+                                name="name"
+                                value={form.name}
+                                onChange={handleFormChange}
+                                required
+                              />
+                            </Box>
+                            <Box>
+                              <Text fontWeight="medium">Preço</Text>
+                              <Input
+                                name="price"
+                                value={form.price}
+                                onChange={handleFormChange}
+                                type="number"
+                                min="0"
+                                required
+                              />
+                            </Box>
+                            <Box>
+                              <Text fontWeight="medium">Descrição</Text>
+                              <textarea
+                                name="description"
+                                value={form.description}
+                                onChange={handleFormChange}
+                                rows={3}
+                                style={{ width: '100%', padding: 8, borderRadius: 4, border: '1px solid #ccc', resize: 'vertical' }}
+                              />
+                            </Box>
+                          </Box>
+                        </Modal.Body>
+                        <Modal.Footer>
+                          <Button appearance="primary" type="submit" disabled={isLoading}>
+                            {isLoading ? 'Salvando...' : 'Salvar'}
+                          </Button>
+                          <Button appearance="neutral" onClick={closeModal} type="button">
+                            Cancelar
+                          </Button>
+                        </Modal.Footer>
+                      </form>
+                    </Modal>
+                    <Responsive
+                      mobileContent={
+                        <ListMobile
+                          products={products}
                           onDeleteProduct={onDeleteProduct}
+                          onSyncProduct={onSyncProduct}
                           isLoading={isLoading}
                         />
-                        {!isLoading && (
-                          <Box
-                            display="flex"
-                            alignItems="center"
-                            justifyContent="space-between"
-                          >
-                            <Text>
-                              Mostrando <strong>1</strong> -{' '}
-                              <strong>{Math.min(PAGE_SIZE, total)}</strong> elementos de{' '}
-                              <strong>{total}</strong>
-                            </Text>
-                            <Pagination
-                              activePage={currentPage}
-                              onPageChange={handlePageChange}
-                              pageCount={Math.max(1, Math.ceil(total / PAGE_SIZE))}
-                            />
-                          </Box>
-                        )}
-                      </>
-                    }
-                  />
+                      }
+                      desktopContent={
+                        <>
+                          <ListDesktop
+                            products={productsPaginated}
+                            onDeleteProduct={onDeleteProduct}
+                            onSyncProduct={onSyncProduct}
+                            isLoading={isLoading}
+                          />
+                          {!isLoading && (
+                            <Box
+                              display="flex"
+                              alignItems="center"
+                              justifyContent="space-between"
+                            >
+                              <Text>
+                                Mostrando <strong>1</strong> -{' '}
+                                <strong>{Math.min(PAGE_SIZE, total)}</strong> elementos de{' '}
+                                <strong>{total}</strong>
+                              </Text>
+                              <Pagination
+                                activePage={currentPage}
+                                onPageChange={handlePageChange}
+                                pageCount={Math.max(1, Math.ceil(total / PAGE_SIZE))}
+                              />
+                            </Box>
+                          )}
+                        </>
+                      }
+                    />
+                  </>
                 );
               }}
             </ProductsDataProvider>

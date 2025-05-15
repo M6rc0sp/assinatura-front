@@ -65,6 +65,8 @@ export interface IProductsDataProvider {
   children: (data: {
     products: IProduct[];
     onDeleteProduct: (productId: number) => void;
-    isLoading: boolean; // Adicionando propriedade isLoading
+    onSyncProduct: (productId: number) => void;
+    onCreateProduct: (data: { name: string; price: number; description: string }) => Promise<void>;
+    isLoading: boolean;
   }) => React.ReactNode;
 }
