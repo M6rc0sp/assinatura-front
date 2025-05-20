@@ -96,6 +96,8 @@ const Products: React.FC = () => {
                                 onChange={handleFormChange}
                                 type="number"
                                 min="0"
+                                step="0.01"
+                                inputMode="decimal"
                                 required
                               />
                             </Box>
