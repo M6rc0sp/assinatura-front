@@ -52,7 +52,7 @@ const Products: React.FC = () => {
               </Button>
             </Box>
             <ProductsDataProvider>
-              {({ products, onDeleteProduct, onSyncProduct, onCreateProduct, isLoading }) => {
+              {({ products, onDeleteProduct, onSyncProduct, onCreateProduct, onEditProduct, isLoading }) => {
                 const total = products.length;
                 const productsPaginated = products.slice(
                   currentPage === 1 ? 0 : (currentPage - 1) * PAGE_SIZE,
@@ -129,6 +129,7 @@ const Products: React.FC = () => {
                           products={products}
                           onDeleteProduct={onDeleteProduct}
                           onSyncProduct={onSyncProduct}
+                          onEditProduct={onEditProduct}
                           isLoading={isLoading}
                         />
                       }
@@ -138,6 +139,7 @@ const Products: React.FC = () => {
                             products={productsPaginated}
                             onDeleteProduct={onDeleteProduct}
                             onSyncProduct={onSyncProduct}
+                            onEditProduct={onEditProduct}
                             isLoading={isLoading}
                           />
                           {!isLoading && (

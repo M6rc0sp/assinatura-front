@@ -9,13 +9,15 @@ type Props = {
   products: IProduct[];
   onDeleteProduct: (productId: number) => void;
   onSyncProduct: (productId: number) => void;
+  onEditProduct: (productId: number, data: { name: string; price: number; description: string }) => Promise<void>;
   isLoading?: boolean;
 };
 
-const ListDesktop: React.FC<Props> = ({ products, onDeleteProduct, onSyncProduct, isLoading }) => {
+const ListDesktop: React.FC<Props> = ({ products, onDeleteProduct, onSyncProduct, onEditProduct, isLoading }) => {
   const [selectedProduct, setSelectedProduct] = useState<IProduct | null>(null);
   const [isEditing, setIsEditing] = useState(false);
   const [editForm, setEditForm] = useState<{ name: string; price: string; description: string }>({ name: '', price: '', description: '' });
+  const [editLoading, setEditLoading] = useState(false);
 
   // Função auxiliar para extrair o nome do produto, independente do formato
   const getProductName = (product: IProduct): string => {
@@ -42,21 +44,15 @@ const ListDesktop: React.FC<Props> = ({ products, onDeleteProduct, onSyncProduct
 
   const handleEditProduct = async () => {
     if (!selectedProduct) return;
-    // Chamar endpoint de edição (PUT/PATCH) via fetch ou provider
-    // Exemplo simples usando fetch (ajuste para provider se necessário)
-    await fetch(`/app/seller/${selectedProduct.seller_id}/products/${selectedProduct.id}`, {
-      method: 'PUT',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        name: editForm.name,
-        price: Number(editForm.price),
-        description: editForm.description,
-      }),
+    setEditLoading(true);
+    await onEditProduct(selectedProduct.id, {
+      name: editForm.name,
+      price: Number(editForm.price),
+      description: editForm.description,
     });
+    setEditLoading(false);
     setIsEditing(false);
     setSelectedProduct(null);
-    // Ideal: disparar um refresh na lista (pode ser via provider)
-    window.location.reload(); // simples, mas pode ser melhorado
   };
 
   const handleCloseModal = () => {
@@ -258,8 +254,8 @@ const ListDesktop: React.FC<Props> = ({ products, onDeleteProduct, onSyncProduct
             <Modal.Footer>
               {isEditing ? (
                 <>
-                  <Button appearance="primary" onClick={handleEditProduct}>
-                    Salvar
+                  <Button appearance="primary" onClick={handleEditProduct} disabled={editLoading}>
+                    {editLoading ? 'Salvando...' : 'Salvar'}
                   </Button>
                   <Button appearance="neutral" onClick={() => setIsEditing(false)}>
                     Cancelar

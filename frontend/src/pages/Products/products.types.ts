@@ -67,6 +67,7 @@ export interface IProductsDataProvider {
     onDeleteProduct: (productId: number) => void;
     onSyncProduct: (productId: number) => void;
     onCreateProduct: (data: { name: string; price: number; description: string }) => Promise<void>;
+    onEditProduct: (productId: number, data: { name: string; price: number; description: string }) => Promise<void>;
     isLoading: boolean;
   }) => React.ReactNode;
 }

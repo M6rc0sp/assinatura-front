@@ -174,7 +174,35 @@ const ProductsDataProvider: React.FC<IProductsDataProvider> = ({
     }
   };
 
-  return children({ products, onDeleteProduct, onSyncProduct, onCreateProduct, isLoading });
+  const onEditProduct = async (productId: number, data: { name: string; price: number; description: string }) => {
+    if (!sellerId) return;
+    setIsLoading(true);
+    try {
+      await request({
+        url: `/app/seller/${sellerId}/products/${productId}`,
+        method: 'PUT',
+        data,
+      });
+      addToast({
+        type: 'success',
+        text: 'Produto atualizado com sucesso!',
+        duration: 4000,
+        id: 'edit-product',
+      });
+      onGetProducts();
+    } catch (error: any) {
+      addToast({
+        type: 'danger',
+        text: error.message?.description ?? error.message ?? 'Erro ao editar produto',
+        duration: 4000,
+        id: 'error-edit-product',
+      });
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  return children({ products, onDeleteProduct, onSyncProduct, onCreateProduct, onEditProduct, isLoading });
 };
 
 export default ProductsDataProvider;
