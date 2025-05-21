@@ -14,22 +14,51 @@ type Props = {
 
 const ListDesktop: React.FC<Props> = ({ products, onDeleteProduct, onSyncProduct, isLoading }) => {
   const [selectedProduct, setSelectedProduct] = useState<IProduct | null>(null);
-  
+  const [isEditing, setIsEditing] = useState(false);
+  const [editForm, setEditForm] = useState<{ name: string; price: string; description: string }>({ name: '', price: '', description: '' });
+
   // Função auxiliar para extrair o nome do produto, independente do formato
   const getProductName = (product: IProduct): string => {
     if (!product.name) return 'Produto sem nome';
-    
     if (typeof product.name === 'string') {
       return product.name;
     }
-    
     return product.name.pt || product.name.es || 'Produto sem nome';
   };
 
   const handleViewProductDetails = (product: IProduct) => {
     setSelectedProduct(product);
+    setIsEditing(false);
+    setEditForm({
+      name: getProductName(product),
+      price: product.price ? String(product.price) : '',
+      description: product.description ? String(product.description) : '',
+    });
   };
-  
+
+  const handleEditChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
+    setEditForm({ ...editForm, [e.target.name]: e.target.value });
+  };
+
+  const handleEditProduct = async () => {
+    if (!selectedProduct) return;
+    // Chamar endpoint de edição (PUT/PATCH) via fetch ou provider
+    // Exemplo simples usando fetch (ajuste para provider se necessário)
+    await fetch(`/app/seller/${selectedProduct.seller_id}/products/${selectedProduct.id}`, {
+      method: 'PUT',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        name: editForm.name,
+        price: Number(editForm.price),
+        description: editForm.description,
+      }),
+    });
+    setIsEditing(false);
+    setSelectedProduct(null);
+    // Ideal: disparar um refresh na lista (pode ser via provider)
+    window.location.reload(); // simples, mas pode ser melhorado
+  };
+
   const handleCloseModal = () => {
     setSelectedProduct(null);
   };
@@ -165,37 +194,87 @@ const ListDesktop: React.FC<Props> = ({ products, onDeleteProduct, onSyncProduct
                   </Box>
                 </Box>
                 
-                {selectedProduct.description && (
-                  <Box display="flex" flexDirection="column" gap="1">
-                    <Text fontWeight="bold">Descrição:</Text>
-                    <Text>{typeof selectedProduct.description === 'string'
-                      ? selectedProduct.description
-                      : (selectedProduct.description as { pt?: string; es?: string })?.pt ||
-                        (selectedProduct.description as { pt?: string; es?: string })?.es ||
-                        ''}
-                    </Text>
+                {isEditing ? (
+                  <Box display="flex" flexDirection="column" gap="2">
+                    <Text fontWeight="bold">Editar Produto</Text>
+                    <input
+                      name="name"
+                      value={editForm.name}
+                      onChange={handleEditChange}
+                      placeholder="Nome"
+                      style={{ padding: 8, borderRadius: 4, border: '1px solid #ccc' }}
+                    />
+                    <input
+                      name="price"
+                      value={editForm.price}
+                      onChange={handleEditChange}
+                      type="number"
+                      min="0"
+                      step="0.01"
+                      inputMode="decimal"
+                      placeholder="Preço"
+                      style={{ padding: 8, borderRadius: 4, border: '1px solid #ccc' }}
+                    />
+                    <textarea
+                      name="description"
+                      value={editForm.description}
+                      onChange={handleEditChange}
+                      rows={3}
+                      placeholder="Descrição"
+                      style={{ width: '100%', padding: 8, borderRadius: 4, border: '1px solid #ccc', resize: 'vertical' }}
+                    />
                   </Box>
-                )}
-                
-                {selectedProduct.price && (
-                  <Box display="flex" flexDirection="column" gap="1">
-                    <Text fontWeight="bold">Preço:</Text>
-                    <Text>{Number(selectedProduct.price).toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })}</Text>
-                  </Box>
-                )}
-                
-                {selectedProduct.sku && (
-                  <Box display="flex" flexDirection="column" gap="1">
-                    <Text fontWeight="bold">SKU:</Text>
-                    <Text>{selectedProduct.sku}</Text>
-                  </Box>
+                ) : (
+                  <>
+                    {selectedProduct.description && (
+                      <Box display="flex" flexDirection="column" gap="1">
+                        <Text fontWeight="bold">Descrição:</Text>
+                        <Text>{typeof selectedProduct.description === 'string'
+                          ? selectedProduct.description
+                          : (selectedProduct.description as { pt?: string; es?: string })?.pt ||
+                            (selectedProduct.description as { pt?: string; es?: string })?.es ||
+                            ''}
+                        </Text>
+                      </Box>
+                    )}
+                    
+                    {selectedProduct.price && (
+                      <Box display="flex" flexDirection="column" gap="1">
+                        <Text fontWeight="bold">Preço:</Text>
+                        <Text>{Number(selectedProduct.price).toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })}</Text>
+                      </Box>
+                    )}
+                    
+                    {selectedProduct.sku && (
+                      <Box display="flex" flexDirection="column" gap="1">
+                        <Text fontWeight="bold">SKU:</Text>
+                        <Text>{selectedProduct.sku}</Text>
+                      </Box>
+                    )}
+                  </>
                 )}
               </Box>
             </Modal.Body>
             <Modal.Footer>
-              <Button appearance="neutral" onClick={handleCloseModal}>
-                Fechar
-              </Button>
+              {isEditing ? (
+                <>
+                  <Button appearance="primary" onClick={handleEditProduct}>
+                    Salvar
+                  </Button>
+                  <Button appearance="neutral" onClick={() => setIsEditing(false)}>
+                    Cancelar
+                  </Button>
+                </>
+              ) : (
+                <>
+                  <Button appearance="primary" onClick={() => setIsEditing(true)}>
+                    Editar
+                  </Button>
+                  <Button appearance="neutral" onClick={handleCloseModal}>
+                    Fechar
+                  </Button>
+                </>
+              )}
             </Modal.Footer>
           </Modal>
         )}
