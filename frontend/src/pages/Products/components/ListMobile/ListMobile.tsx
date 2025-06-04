@@ -10,14 +10,44 @@ type Props = {
   products: IProduct[];
   onDeleteProduct: (productId: number) => void;
   onSyncProduct: (productId: number) => void;
-  onEditProduct: (productId: number, data: { name: string; price: number; description: string }) => Promise<void>;
+  onEditProduct: (productId: number, data: { 
+    name: string;
+    price: number;
+    description: string;
+    subscription_price?: number;
+    sku?: string;
+    barcode?: string;
+    weight?: number;
+    stock?: number;
+    status?: string;
+  }) => Promise<void>;
   isLoading?: boolean;
 };
 
 const ListMobile: React.FC<Props> = ({ products, onDeleteProduct, onSyncProduct, onEditProduct, isLoading }) => {
   const [selectedProduct, setSelectedProduct] = useState<IProduct | null>(null);
   const [isEditing, setIsEditing] = useState(false);
-  const [editForm, setEditForm] = useState<{ name: string; price: string; description: string }>({ name: '', price: '', description: '' });
+  const [editForm, setEditForm] = useState<{ 
+    name: string; 
+    price: string; 
+    description: string;
+    subscription_price: string;
+    sku: string;
+    barcode: string;
+    weight: string;
+    stock: string;
+    status: string;
+  }>({ 
+    name: '', 
+    price: '', 
+    description: '',
+    subscription_price: '',
+    sku: '',
+    barcode: '',
+    weight: '',
+    stock: '',
+    status: 'active'
+  });
   const [editLoading, setEditLoading] = useState(false);
 
   // Função auxiliar para extrair o nome do produto, independente do formato
@@ -38,6 +68,12 @@ const ListMobile: React.FC<Props> = ({ products, onDeleteProduct, onSyncProduct,
       name: getProductName(product),
       price: product.price ? String(product.price) : '',
       description: product.description ? String(product.description) : '',
+      subscription_price: product.subscription_price ? String(product.subscription_price) : '',
+      sku: product.sku || '',
+      barcode: product.barcode || '',
+      weight: product.weight ? String(product.weight) : '',
+      stock: product.stock ? String(product.stock) : '',
+      status: product.status || 'active'
     });
   };
 
@@ -52,6 +88,12 @@ const ListMobile: React.FC<Props> = ({ products, onDeleteProduct, onSyncProduct,
       name: editForm.name,
       price: Number(editForm.price),
       description: editForm.description,
+      subscription_price: editForm.subscription_price ? Number(editForm.subscription_price) : undefined,
+      sku: editForm.sku || undefined,
+      barcode: editForm.barcode || undefined,
+      weight: editForm.weight ? Number(editForm.weight) : undefined,
+      stock: editForm.stock ? Number(editForm.stock) : undefined,
+      status: editForm.status || 'active'
     });
     setEditLoading(false);
     setIsEditing(false);
@@ -170,32 +212,120 @@ const ListMobile: React.FC<Props> = ({ products, onDeleteProduct, onSyncProduct,
                 {isEditing ? (
                   <Box display="flex" flexDirection="column" gap="2">
                     <Text fontWeight="bold">Editar Produto</Text>
-                    <input
-                      name="name"
-                      value={editForm.name}
-                      onChange={handleEditChange}
-                      placeholder="Nome"
-                      style={{ padding: 8, borderRadius: 4, border: '1px solid #ccc' }}
-                    />
-                    <input
-                      name="price"
-                      value={editForm.price}
-                      onChange={handleEditChange}
-                      type="number"
-                      min="0"
-                      step="0.01"
-                      inputMode="decimal"
-                      placeholder="Preço"
-                      style={{ padding: 8, borderRadius: 4, border: '1px solid #ccc' }}
-                    />
-                    <textarea
-                      name="description"
-                      value={editForm.description}
-                      onChange={handleEditChange}
-                      rows={3}
-                      placeholder="Descrição"
-                      style={{ width: '100%', padding: 8, borderRadius: 4, border: '1px solid #ccc', resize: 'vertical' }}
-                    />
+                    <Box>
+                      <Text fontSize="caption">Nome:</Text>
+                      <input
+                        name="name"
+                        value={editForm.name}
+                        onChange={handleEditChange}
+                        placeholder="Nome"
+                        style={{ padding: 8, borderRadius: 4, border: '1px solid #ccc', width: '100%' }}
+                      />
+                    </Box>
+                    
+                    <Box>
+                      <Text fontSize="caption">Preço:</Text>
+                      <input
+                        name="price"
+                        value={editForm.price}
+                        onChange={handleEditChange}
+                        type="number"
+                        min="0"
+                        step="0.01"
+                        inputMode="decimal"
+                        placeholder="Preço"
+                        style={{ padding: 8, borderRadius: 4, border: '1px solid #ccc', width: '100%' }}
+                      />
+                    </Box>
+                    
+                    <Box>
+                      <Text fontSize="caption">Preço de Assinatura:</Text>
+                      <input
+                        name="subscription_price"
+                        value={editForm.subscription_price}
+                        onChange={handleEditChange}
+                        type="number"
+                        min="0"
+                        step="0.01"
+                        inputMode="decimal"
+                        placeholder="Preço de Assinatura"
+                        style={{ padding: 8, borderRadius: 4, border: '1px solid #ccc', width: '100%' }}
+                      />
+                    </Box>
+                    
+                    <Box>
+                      <Text fontSize="caption">SKU:</Text>
+                      <input
+                        name="sku"
+                        value={editForm.sku}
+                        onChange={handleEditChange}
+                        placeholder="SKU"
+                        style={{ padding: 8, borderRadius: 4, border: '1px solid #ccc', width: '100%' }}
+                      />
+                    </Box>
+                    
+                    <Box>
+                      <Text fontSize="caption">Código de Barras:</Text>
+                      <input
+                        name="barcode"
+                        value={editForm.barcode}
+                        onChange={handleEditChange}
+                        placeholder="Código de Barras"
+                        style={{ padding: 8, borderRadius: 4, border: '1px solid #ccc', width: '100%' }}
+                      />
+                    </Box>
+                    
+                    <Box>
+                      <Text fontSize="caption">Peso (g):</Text>
+                      <input
+                        name="weight"
+                        value={editForm.weight}
+                        onChange={handleEditChange}
+                        type="number"
+                        min="0"
+                        placeholder="Peso em gramas"
+                        style={{ padding: 8, borderRadius: 4, border: '1px solid #ccc', width: '100%' }}
+                      />
+                    </Box>
+                    
+                    <Box>
+                      <Text fontSize="caption">Estoque:</Text>
+                      <input
+                        name="stock"
+                        value={editForm.stock}
+                        onChange={handleEditChange}
+                        type="number"
+                        min="0"
+                        placeholder="Quantidade em Estoque"
+                        style={{ padding: 8, borderRadius: 4, border: '1px solid #ccc', width: '100%' }}
+                      />
+                    </Box>
+                    
+                    <Box>
+                      <Text fontSize="caption">Status:</Text>
+                      <select
+                        name="status"
+                        value={editForm.status}
+                        onChange={handleEditChange as any}
+                        style={{ padding: 8, borderRadius: 4, border: '1px solid #ccc', width: '100%' }}
+                      >
+                        <option value="active">Ativo</option>
+                        <option value="inactive">Inativo</option>
+                        <option value="draft">Rascunho</option>
+                      </select>
+                    </Box>
+                    
+                    <Box>
+                      <Text fontSize="caption">Descrição:</Text>
+                      <textarea
+                        name="description"
+                        value={editForm.description}
+                        onChange={handleEditChange}
+                        rows={3}
+                        placeholder="Descrição"
+                        style={{ width: '100%', padding: 8, borderRadius: 4, border: '1px solid #ccc', resize: 'vertical' }}
+                      />
+                    </Box>
                   </Box>
                 ) : (
                   <>
@@ -225,10 +355,50 @@ const ListMobile: React.FC<Props> = ({ products, onDeleteProduct, onSyncProduct,
                       </Box>
                     )}
                     
+                    {selectedProduct.subscription_price && (
+                      <Box>
+                        <Text fontWeight="medium">Preço de Assinatura:</Text>
+                        <Text>{Number(selectedProduct.subscription_price).toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })}</Text>
+                      </Box>
+                    )}
+                    
                     {selectedProduct.sku && (
                       <Box>
                         <Text fontWeight="medium">SKU:</Text>
                         <Text>{selectedProduct.sku}</Text>
+                      </Box>
+                    )}
+                    
+                    {selectedProduct.barcode && (
+                      <Box>
+                        <Text fontWeight="medium">Código de Barras:</Text>
+                        <Text>{selectedProduct.barcode}</Text>
+                      </Box>
+                    )}
+                    
+                    {selectedProduct.weight && (
+                      <Box>
+                        <Text fontWeight="medium">Peso:</Text>
+                        <Text>{selectedProduct.weight}g</Text>
+                      </Box>
+                    )}
+                    
+                    {selectedProduct.stock !== undefined && selectedProduct.stock !== null && (
+                      <Box>
+                        <Text fontWeight="medium">Estoque:</Text>
+                        <Text>{selectedProduct.stock} unidades</Text>
+                      </Box>
+                    )}
+                    
+                    {selectedProduct.status && (
+                      <Box>
+                        <Text fontWeight="medium">Status:</Text>
+                        <Text>{
+                          selectedProduct.status === 'active' ? 'Ativo' : 
+                          selectedProduct.status === 'inactive' ? 'Inativo' : 
+                          selectedProduct.status === 'draft' ? 'Rascunho' : 
+                          selectedProduct.status
+                        }</Text>
                       </Box>
                     )}
                   </>

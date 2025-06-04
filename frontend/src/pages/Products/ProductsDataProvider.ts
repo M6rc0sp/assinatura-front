@@ -146,7 +146,17 @@ const ProductsDataProvider: React.FC<IProductsDataProvider> = ({
     }
   };
 
-  const onCreateProduct = async (data: { name: string; price: number; description: string }) => {
+  const onCreateProduct = async (data: { 
+    name: string; 
+    price: number; 
+    description: string;
+    subscription_price?: number;
+    sku?: string;
+    barcode?: string;
+    weight?: number;
+    stock?: number;
+    status?: string;
+  }) => {
     if (!sellerId) return;
     setIsLoading(true);
     try {
@@ -174,7 +184,17 @@ const ProductsDataProvider: React.FC<IProductsDataProvider> = ({
     }
   };
 
-  const onEditProduct = async (productId: number, data: { name: string; price: number; description: string }) => {
+  const onEditProduct = async (productId: number, data: {
+    name: string; 
+    price: number; 
+    description: string;
+    subscription_price?: number;
+    sku?: string;
+    barcode?: string;
+    weight?: number;
+    stock?: number;
+    status?: string;
+  }) => {
     if (!sellerId) return;
     setIsLoading(true);
     try {

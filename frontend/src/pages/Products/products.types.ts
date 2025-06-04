@@ -49,14 +49,21 @@ export interface IProduct {
     es?: string;
   };
   // Campos adicionais conforme retornado pela API atual
-  seller_id?: string;
-  price?: number;
-  stock?: number;
-  sku?: string;
-  description?: string;
+  seller_id?: number;          // ID do vendedor (obrigatório)
+  price?: number;              // Preço unitário normal (obrigatório)
+  subscription_price?: number; // Preço para assinatura (pode ser diferente do unitário)
+  stock?: number;              // Quantidade em estoque
+  sku?: string;                // Código SKU
+  barcode?: string;            // Código de barras
+  weight?: number;             // Peso (em gramas)
+  description?: string | {     // Descrição do produto
+    pt?: string;
+    es?: string;
+  };
+  status?: string;             // Status: 'active', 'inactive', 'draft'
   categories?: string;
   variants?: IVariant[];
-  images?: IImage[] | null;
+  images?: IImage[] | null;    // URLs das imagens
   createdAt?: string;
   updatedAt?: string;
 }
@@ -66,8 +73,28 @@ export interface IProductsDataProvider {
     products: IProduct[];
     onDeleteProduct: (productId: number) => void;
     onSyncProduct: (productId: number) => void;
-    onCreateProduct: (data: { name: string; price: number; description: string }) => Promise<void>;
-    onEditProduct: (productId: number, data: { name: string; price: number; description: string }) => Promise<void>;
+    onCreateProduct: (data: { 
+      name: string; 
+      price: number; 
+      description: string;
+      subscription_price?: number;
+      sku?: string;
+      barcode?: string;
+      weight?: number;
+      stock?: number;
+      status?: string;
+    }) => Promise<void>;
+    onEditProduct: (productId: number, data: { 
+      name: string; 
+      price: number; 
+      description: string;
+      subscription_price?: number;
+      sku?: string;
+      barcode?: string;
+      weight?: number;
+      stock?: number;
+      status?: string; 
+    }) => Promise<void>;
     isLoading: boolean;
   }) => React.ReactNode;
 }
