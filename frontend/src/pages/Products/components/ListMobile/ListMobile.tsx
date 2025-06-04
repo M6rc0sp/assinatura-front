@@ -77,7 +77,9 @@ const ListMobile: React.FC<Props> = ({ products, onDeleteProduct, onSyncProduct,
     });
   };
 
-  const handleEditChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
+  const handleEditChange = (
+    e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>
+  ) => {
     setEditForm({ ...editForm, [e.target.name]: e.target.value });
   };
 
@@ -306,7 +308,7 @@ const ListMobile: React.FC<Props> = ({ products, onDeleteProduct, onSyncProduct,
                       <select
                         name="status"
                         value={editForm.status}
-                        onChange={handleEditChange as any}
+                        onChange={handleEditChange}
                         style={{ padding: 8, borderRadius: 4, border: '1px solid #ccc', width: '100%' }}
                       >
                         <option value="active">Ativo</option>

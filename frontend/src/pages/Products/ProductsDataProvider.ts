@@ -199,7 +199,7 @@ const ProductsDataProvider: React.FC<IProductsDataProvider> = ({
     setIsLoading(true);
     try {
       await request({
-        url: `/app/sellers/${sellerId}/products/${productId}`,
+        url: `/app/seller/${sellerId}/products/${productId}`,
         method: 'PUT',
         data,
       });

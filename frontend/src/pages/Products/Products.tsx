@@ -21,15 +21,35 @@ const Products: React.FC = () => {
   }, []);
 
   const [showModal, setShowModal] = useState(false);
-  const [form, setForm] = useState({ name: '', price: '', description: '' });
+  const [form, setForm] = useState({
+    name: '',
+    price: '',
+    description: '',
+    subscription_price: '',
+    sku: '',
+    barcode: '',
+    weight: '',
+    stock: '',
+    status: 'active'
+  });
 
   const openModal = () => setShowModal(true);
   const closeModal = () => {
     setShowModal(false);
-    setForm({ name: '', price: '', description: '' });
+    setForm({
+      name: '',
+      price: '',
+      description: '',
+      subscription_price: '',
+      sku: '',
+      barcode: '',
+      weight: '',
+      stock: '',
+      status: 'active'
+    });
   };
 
-  const handleFormChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
+  const handleFormChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>) => {
     setForm({ ...form, [e.target.name]: e.target.value });
   };
 
@@ -65,6 +85,12 @@ const Products: React.FC = () => {
                     name: form.name,
                     price: Number(form.price),
                     description: form.description,
+                    subscription_price: form.subscription_price ? Number(form.subscription_price) : undefined,
+                    sku: form.sku || undefined,
+                    barcode: form.barcode || undefined,
+                    weight: form.weight ? Number(form.weight) : undefined,
+                    stock: form.stock ? Number(form.stock) : undefined,
+                    status: form.status
                   });
                   setCurrentPage(1);
                   closeModal();
@@ -88,6 +114,7 @@ const Products: React.FC = () => {
                                 required
                               />
                             </Box>
+                            
                             <Box>
                               <Text fontWeight="medium">Preço</Text>
                               <Input
@@ -101,6 +128,78 @@ const Products: React.FC = () => {
                                 required
                               />
                             </Box>
+                            
+                            <Box>
+                              <Text fontWeight="medium">Preço de Assinatura</Text>
+                              <Input
+                                name="subscription_price"
+                                value={form.subscription_price}
+                                onChange={handleFormChange}
+                                type="number"
+                                min="0"
+                                step="0.01"
+                                inputMode="decimal"
+                              />
+                            </Box>
+                            
+                            <Box>
+                              <Text fontWeight="medium">SKU</Text>
+                              <Input
+                                name="sku"
+                                value={form.sku}
+                                onChange={handleFormChange}
+                                placeholder="SKU do produto"
+                              />
+                            </Box>
+                            
+                            <Box>
+                              <Text fontWeight="medium">Código de Barras</Text>
+                              <Input
+                                name="barcode"
+                                value={form.barcode}
+                                onChange={handleFormChange}
+                                placeholder="Código de barras"
+                              />
+                            </Box>
+                            
+                            <Box>
+                              <Text fontWeight="medium">Peso (em gramas)</Text>
+                              <Input
+                                name="weight"
+                                value={form.weight}
+                                onChange={handleFormChange}
+                                type="number"
+                                min="0"
+                                placeholder="Peso em gramas"
+                              />
+                            </Box>
+                            
+                            <Box>
+                              <Text fontWeight="medium">Estoque</Text>
+                              <Input
+                                name="stock"
+                                value={form.stock}
+                                onChange={handleFormChange}
+                                type="number"
+                                min="0"
+                                placeholder="Quantidade em estoque"
+                              />
+                            </Box>
+                            
+                            <Box>
+                              <Text fontWeight="medium">Status</Text>
+                              <select
+                                name="status"
+                                value={form.status}
+                                onChange={handleFormChange}
+                                style={{ width: '100%', padding: 8, borderRadius: 4, border: '1px solid #ccc' }}
+                              >
+                                <option value="active">Ativo</option>
+                                <option value="inactive">Inativo</option>
+                                <option value="draft">Rascunho</option>
+                              </select>
+                            </Box>
+                            
                             <Box>
                               <Text fontWeight="medium">Descrição</Text>
                               <textarea
