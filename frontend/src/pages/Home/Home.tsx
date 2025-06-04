@@ -21,6 +21,7 @@ const Home: React.FC = () => {
               <Button onClick={() => navigate('/shoppers')}>Clientes</Button>
               <Button onClick={() => navigate('/subscriptions')}>Assinaturas</Button>
               <Button onClick={() => navigate('/orders')}>Pedidos</Button>
+              <Button onClick={() => navigate('/payment-methods')}>Métodos de Pagamento</Button>
             </Card.Footer>
           </Card>
         </Box>

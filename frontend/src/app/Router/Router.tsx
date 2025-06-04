@@ -1,6 +1,6 @@
 import React from 'react';
 import { Navigate, Route, Routes } from 'react-router-dom';
-import { Examples, Home, Products, Shoppers, ShopperSubscriptions, Orders } from '@/pages';
+import { Examples, Home, Products, Shoppers, ShopperSubscriptions, Orders, PaymentMethods } from '@/pages';
 
 const Router: React.FC = () => (
   <Routes>
@@ -10,6 +10,7 @@ const Router: React.FC = () => (
     <Route path="/shoppers/:shopperId/subscriptions" element={<ShopperSubscriptions />} />
     <Route path="/subscriptions" element={<ShopperSubscriptions />} />
     <Route path="/orders" element={<Orders />} />
+    <Route path="/payment-methods" element={<PaymentMethods />} />
     <Route path="/examples" element={<Examples />} />
     <Route path="*" element={<Navigate to="/" replace />} />
   </Routes>

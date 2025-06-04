@@ -82,5 +82,16 @@ export default {
         many: 'Selecionadas',
       },
     },
+    payment_methods: {
+      title: 'Métodos de Pagamento',
+      subtitle: 'Gerencie os métodos de pagamento disponíveis para os seus clientes.',
+      enabled: 'Ativado',
+      disabled: 'Desativado',
+      enable: 'Ativar',
+      disable: 'Desativar',
+      credit_card_description: 'Aceite pagamentos via cartão de crédito em suas assinaturas.',
+      pix_description: 'Aceite pagamentos via PIX em suas assinaturas e receba mais rápido.',
+      boleto_description: 'Aceite pagamentos via boleto bancário em suas assinaturas.'
+    },
   },
 };
