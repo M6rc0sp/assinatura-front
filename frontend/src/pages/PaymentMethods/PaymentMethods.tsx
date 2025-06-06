@@ -18,8 +18,16 @@ const PaymentMethods: React.FC = () => {
   }, []);
 
   const getPaymentMethodLabel = (method: string): string => {
-    const key = method.toUpperCase() as keyof typeof PAYMENT_METHOD_LABELS;
-    return PAYMENT_METHOD_LABELS[key] || PAYMENT_METHOD_LABELS.unknown;
+    switch (method) {
+      case 'credit_card':
+        return PAYMENT_METHOD_LABELS.CREDIT_CARD;
+      case 'pix':
+        return PAYMENT_METHOD_LABELS.PIX;
+      case 'boleto':
+        return PAYMENT_METHOD_LABELS.BOLETO;
+      default:
+        return PAYMENT_METHOD_LABELS.unknown;
+    }
   };
 
   const renderPaymentMethodCard = (

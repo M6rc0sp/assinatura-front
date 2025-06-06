@@ -17,55 +17,6 @@ const PaymentMethodsDataProvider: React.FC<IPaymentMethodsDataProvider> = ({
   const [isLoading, setIsLoading] = useState<boolean>(true);
   const sellerId = useSellerId();
 
-  // Função para verificar se a resposta é HTML
-  const isHtmlResponse = (content: any): boolean => {
-    if (typeof content === 'string' && 
-       (content.trim().startsWith('<!DOCTYPE') || 
-        content.trim().startsWith('<html'))) {
-      return true;
-    }
-    return false;
-  };
-
-  const processApiResponse = (response: any, entityName: string): any => {
-    console.log(`API ${entityName} Response:`, response);
-
-    // Verificando se a resposta é HTML em vez de JSON
-    if (isHtmlResponse(response.content)) {
-      console.error(`API retornou HTML em vez de JSON para ${entityName}:`, 
-                    response.content.substring(0, 100) + '...');
-      
-      addToast({
-        type: 'danger',
-        text: `Erro de comunicação com o servidor ao carregar ${entityName.toLowerCase()}. Verifique se a API está ativa.`,
-        duration: 4000,
-        id: `error-${entityName.toLowerCase()}-html`,
-      });
-      
-      return null;
-    }
-    
-    // Caso a resposta esteja no formato { success: true, data: [...] }
-    if (response.content && response.content.data) {
-      return response.content.data;
-    }
-    // Caso a resposta seja diretamente o conteúdo
-    else if (response.content) {
-      return response.content;
-    }
-    
-    // Se a resposta não estiver em nenhum formato esperado
-    console.error(`Formato de resposta inesperado para ${entityName}:`, response);
-    addToast({
-      type: 'danger',
-      text: `Formato de dados inesperado ao carregar ${entityName.toLowerCase()}`,
-      duration: 4000,
-      id: `error-${entityName.toLowerCase()}-format`,
-    });
-    
-    return null;
-  };
-
   const fetchPaymentMethods = async () => {
     if (!sellerId) return;
     
@@ -76,15 +27,29 @@ const PaymentMethodsDataProvider: React.FC<IPaymentMethodsDataProvider> = ({
         method: 'GET',
       });
       
-      const data = processApiResponse(response, 'PaymentMethods');
+      console.log('API PaymentMethods Response:', response);
       
-      // Se a API retornar os métodos de pagamento, usamos eles
-      // Caso contrário, mantemos os valores padrão
-      if (Array.isArray(data)) {
-        setPaymentMethods(data);
+      // Verificar se a resposta tem a estrutura esperada
+      const content = response.content as any;
+      if (content && content.data && content.data.payment_methods) {
+        const enabledMethods = content.data.payment_methods; // Array de strings: ["credit_card", "pix", "boleto"]
+        
+        // Mapear para a estrutura IPaymentMethod[]
+        const allMethods: IPaymentMethod[] = [
+          { method: 'credit_card', enabled: enabledMethods.includes('credit_card') },
+          { method: 'pix', enabled: enabledMethods.includes('pix') },
+          { method: 'boleto', enabled: enabledMethods.includes('boleto') }
+        ];
+        
+        setPaymentMethods(allMethods);
       } else {
-        // Se a API não retornar dados, manter os valores padrão
-        console.warn("API não retornou dados de métodos de pagamento, usando valores padrão");
+        // Se a API não retornar dados na estrutura esperada, manter os valores padrão
+        console.warn("API não retornou dados de métodos de pagamento na estrutura esperada, usando valores padrão");
+        setPaymentMethods([
+          { method: 'credit_card', enabled: false },
+          { method: 'pix', enabled: false },
+          { method: 'boleto', enabled: false }
+        ]);
       }
     } catch (error: any) {
       console.error('Erro ao carregar métodos de pagamento:', error);
@@ -104,11 +69,21 @@ const PaymentMethodsDataProvider: React.FC<IPaymentMethodsDataProvider> = ({
     
     setIsLoading(true);
     try {
-      await request({
-        url: `/app/seller/${sellerId}/payment-methods/${method}`,
-        method: 'PUT',
-        data: { enabled },
-      });
+      if (enabled) {
+        // Adicionar método de pagamento
+        await request({
+          url: `/app/seller/${sellerId}/payment-methods`,
+          method: 'POST',
+          data: { payment_method: method },
+        });
+      } else {
+        // Remover método de pagamento
+        await request({
+          url: `/app/seller/${sellerId}/payment-methods`,
+          method: 'DELETE',
+          data: { payment_method: method },
+        });
+      }
       
       // Atualiza o estado localmente
       setPaymentMethods(prevMethods => 
@@ -123,6 +98,9 @@ const PaymentMethodsDataProvider: React.FC<IPaymentMethodsDataProvider> = ({
         duration: 4000,
         id: `update-payment-method-${method}`,
       });
+      
+      // Recarregar dados da API para garantir sincronização
+      await fetchPaymentMethods();
       
       return Promise.resolve();
     } catch (error: any) {
