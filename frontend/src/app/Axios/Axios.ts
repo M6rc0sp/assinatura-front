@@ -8,8 +8,16 @@ const axios = axiosApi.create({
   baseURL: '/api',
 });
 
+// Configurar interceptor para adicionar o token de autorização
 axios.interceptors.request.use(
   async (config) => {
+    // Verificar se estamos fazendo uma chamada para a API de instalação
+    if (config.url && config.url.includes('assinaturas.appns.com.br')) {
+      // Não modificar headers para chamadas externas de instalação
+      return config;
+    }
+    
+    // Para chamadas à API normal, adicionar token de autorização
     if (config.headers) {
       const token = await getSessionToken(nexo);
       config.headers['Authorization'] = `Bearer ${token}`;
