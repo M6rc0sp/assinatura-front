@@ -32,11 +32,11 @@ const Install: React.FC = () => {
           console.log('Instalação finalizada:', response);
           
           setStatus('success');
-          setMessage('Instalação concluída com sucesso! Redirecionando...');
+          setMessage('Instalação concluída com sucesso! Redirecionando para o login...');
           
-          // Redirecionar para a página inicial após a instalação
+          // Redirecionar para a página de login da Nuvemshop após a instalação
           setTimeout(() => {
-            navigate('/');
+            window.location.href = 'http://nuvemshop.com.br/login';
           }, 3000);
         } else {
           console.error('Código de instalação não encontrado');
@@ -92,11 +92,11 @@ const Install: React.FC = () => {
         {status === 'error' && (
           <Card.Footer>
             <Text
-              onClick={() => navigate('/')}
+              onClick={() => window.location.href = 'http://nuvemshop.com.br/login'}
               color="primary"
               style={{ cursor: 'pointer', textDecoration: 'underline', textAlign: 'center', width: '100%' }}
             >
-              Voltar à página inicial
+              Ir para a página de login
             </Text>
           </Card.Footer>
         )}
