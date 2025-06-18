@@ -1,7 +1,8 @@
 import React, { useEffect, useState } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
-import { Box, Text, Spinner } from '@nimbus-ds/components';
-import axios from '@/app/Axios';
+import { Box, Text, Spinner, Card } from '@nimbus-ds/components';
+// Importar o axios diretamente, não o do app que tem configuração do Nexo
+import axiosStandard from 'axios';
 
 const Install: React.FC = () => {
   const [status, setStatus] = useState<'loading' | 'success' | 'error'>('loading');
@@ -21,8 +22,13 @@ const Install: React.FC = () => {
           setStatus('loading');
           setMessage('Conectando ao servidor de instalação...');
           
-          // Fazer a chamada para o endpoint da API
-          const response = await axios.get(`https://assinaturas.appns.com.br/api/ns/install?code=${code}`);
+          // Fazer a chamada para o endpoint da API diretamente sem o Nexo
+          const response = await axiosStandard.get(`https://assinaturas.appns.com.br/api/ns/install?code=${code}`, {
+            headers: {
+              'Accept': 'application/json',
+              'Content-Type': 'application/json'
+            }
+          });
           console.log('Instalação finalizada:', response);
           
           setStatus('success');
@@ -51,29 +57,50 @@ const Install: React.FC = () => {
     <Box
       height="100vh"
       display="flex"
-      flexDirection="column"
       justifyContent="center"
       alignItems="center"
-      gap="4"
+      padding="4"
+      backgroundColor="neutral-surface"
     >
-      {status === 'loading' && <Spinner size="medium" />}
-      <Text
-        fontWeight={status === 'error' ? 'bold' : 'regular'}
-        color={status === 'error' ? 'danger-dark' : status === 'success' ? 'success-dark' : 'neutral-dark'}
-      >
-        {message}
-      </Text>
-      {status === 'error' && (
-        <Box marginTop="4">
-          <Text 
-            onClick={() => navigate('/')}
-            color="primary"
-            style={{ cursor: 'pointer', textDecoration: 'underline' }}
+      <Card style={{ maxWidth: '400px', width: '100%' }}>
+        <Card.Header title="Instalação do Aplicativo" />
+        <Card.Body>
+          <Box
+            display="flex"
+            flexDirection="column"
+            alignItems="center"
+            gap="4"
+            padding="4"
           >
-            Voltar à página inicial
-          </Text>
-        </Box>
-      )}
+            {status === 'loading' && <Spinner size="medium" />}
+            
+            <Text
+              textAlign="center"
+              fontWeight={status === 'error' ? 'bold' : 'regular'}
+              color={
+                status === 'error' 
+                  ? 'danger-dark' 
+                  : status === 'success' 
+                    ? 'success-dark' 
+                    : 'neutral-dark'
+              }
+            >
+              {message}
+            </Text>
+          </Box>
+        </Card.Body>
+        {status === 'error' && (
+          <Card.Footer>
+            <Text
+              onClick={() => navigate('/')}
+              color="primary"
+              style={{ cursor: 'pointer', textDecoration: 'underline', textAlign: 'center', width: '100%' }}
+            >
+              Voltar à página inicial
+            </Text>
+          </Card.Footer>
+        )}
+      </Card>
     </Box>
   );
 };

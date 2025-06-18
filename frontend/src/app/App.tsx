@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import { BrowserRouter } from 'react-router-dom';
+import { BrowserRouter, useLocation } from 'react-router-dom';
 import { Box, Text, ToastProvider } from '@nimbus-ds/components';
 import { ErrorBoundary, connect, iAmReady } from '@tiendanube/nexo';
 import Router from '@/app/Router';
@@ -7,13 +7,20 @@ import Router from '@/app/Router';
 import nexo from './NexoClient';
 import NexoSyncRoute from './NexoSyncRoute';
 import { DarkModeProvider } from './DarkModeProvider';
+import { Install } from '@/pages';
 import './I18n';
 
-const App: React.FC = () => {
+// Componente para verificar se estamos na rota de instalação
+const AppContent: React.FC = () => {
   const [isConnect, setIsConnect] = useState(false);
+  const location = useLocation();
+
+  // Verificar se estamos na rota de instalação
+  const isInstallRoute = location.pathname === '/ns/install';
 
   useEffect(() => {
-    if (!isConnect) {
+    // Só conectar ao Nexo se não estivermos na rota de instalação
+    if (!isConnect && !isInstallRoute) {
       connect(nexo)
         .then(async () => {
           setIsConnect(true);
@@ -23,8 +30,14 @@ const App: React.FC = () => {
           setIsConnect(false);
         });
     }
-  }, []);
+  }, [isConnect, isInstallRoute]);
 
+  // Se estivermos na rota de instalação, renderizar diretamente o componente Install
+  if (isInstallRoute) {
+    return <Install />;
+  }
+
+  // Aguardar conexão com o Nexo para rotas normais
   if (!isConnect)
     return (
       <Box
@@ -39,16 +52,22 @@ const App: React.FC = () => {
 
   return (
     <ErrorBoundary nexo={nexo}>
-      <DarkModeProvider>
-        <ToastProvider>
-          <BrowserRouter>
-            <NexoSyncRoute>
-              <Router />
-            </NexoSyncRoute>
-          </BrowserRouter>
-        </ToastProvider>
-      </DarkModeProvider>
+      <NexoSyncRoute>
+        <Router />
+      </NexoSyncRoute>
     </ErrorBoundary>
+  );
+};
+
+const App: React.FC = () => {
+  return (
+    <DarkModeProvider>
+      <ToastProvider>
+        <BrowserRouter>
+          <AppContent />
+        </BrowserRouter>
+      </ToastProvider>
+    </DarkModeProvider>
   );
 };
 
