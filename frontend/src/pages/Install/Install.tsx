@@ -79,10 +79,10 @@ const Install: React.FC = () => {
               fontWeight={status === 'error' ? 'bold' : 'regular'}
               color={
                 status === 'error' 
-                  ? 'danger-dark' 
+                  ? 'danger-textHigh' 
                   : status === 'success' 
-                    ? 'success-dark' 
-                    : 'neutral-dark'
+                    ? 'success-textHigh' 
+                    : 'neutral-textHigh'
               }
             >
               {message}
@@ -93,7 +93,7 @@ const Install: React.FC = () => {
           <Card.Footer>
             <Text
               onClick={() => window.location.href = 'http://nuvemshop.com.br/login'}
-              color="primary"
+              color="primary-interactive"
               style={{ cursor: 'pointer', textDecoration: 'underline', textAlign: 'center', width: '100%' }}
             >
               Ir para a página de login
