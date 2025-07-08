@@ -3,6 +3,12 @@ export interface IProduct {
   name: string;
   price: number;
   description?: string;
+  subscription_price?: number; // Preço para assinatura
+  sku?: string;
+  barcode?: string;
+  weight?: number;
+  stock?: number;
+  status?: string;
 }
 
 export interface ISubscription {
