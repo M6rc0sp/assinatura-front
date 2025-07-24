@@ -40,6 +40,14 @@ interface IImage {
   updated_at: string;
 }
 
+// Interface para upload de imagens no cadastro/edição
+export interface IProductImage {
+  src?: string;           // URL da imagem existente
+  attachment?: string;    // Base64 para upload de nova imagem
+  filename?: string;      // Nome do arquivo quando usando attachment
+  position: number;       // Posição da imagem (1, 2, 3...)
+}
+
 export interface IProduct {
   external_id: any;
   id: number;
@@ -74,7 +82,7 @@ export interface IProductsDataProvider {
     onDeleteProduct: (productId: number) => void;
     onSyncProduct: (productId: number) => void;
     onCreateProduct: (data: { 
-      name: string; 
+      name: string | { pt?: string; es?: string }; 
       price: number; 
       description: string;
       subscription_price?: number;
@@ -83,9 +91,10 @@ export interface IProductsDataProvider {
       weight?: number;
       stock?: number;
       status?: string;
+      images?: IProductImage[];  // Suporte a imagens no cadastro
     }) => Promise<void>;
     onEditProduct: (productId: number, data: { 
-      name: string; 
+      name: string | { pt?: string; es?: string }; 
       price: number; 
       description: string;
       subscription_price?: number;
@@ -93,7 +102,8 @@ export interface IProductsDataProvider {
       barcode?: string;
       weight?: number;
       stock?: number;
-      status?: string; 
+      status?: string;
+      images?: IProductImage[];  // Suporte a imagens na edição
     }) => Promise<void>;
     isLoading: boolean;
   }) => React.ReactNode;

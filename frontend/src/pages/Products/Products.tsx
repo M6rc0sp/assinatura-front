@@ -30,7 +30,8 @@ const Products: React.FC = () => {
     barcode: '',
     weight: '',
     stock: '',
-    status: 'active'
+    status: 'active',
+    images: [] as File[]  // Array de arquivos de imagem
   });
 
   const openModal = () => setShowModal(true);
@@ -45,7 +46,8 @@ const Products: React.FC = () => {
       barcode: '',
       weight: '',
       stock: '',
-      status: 'active'
+      status: 'active',
+      images: []
     });
   };
 
@@ -81,6 +83,27 @@ const Products: React.FC = () => {
 
                 const handleSubmit = async (e: React.FormEvent) => {
                   e.preventDefault();
+                  
+                  // Converter imagens para base64 se houver
+                  let productImages = undefined;
+                  if (form.images.length > 0) {
+                    try {
+                      productImages = await Promise.all(
+                        form.images.map(async (file, index) => {
+                          const base64 = await fileToBase64(file);
+                          return {
+                            attachment: base64,
+                            filename: file.name,
+                            position: index + 1
+                          };
+                        })
+                      );
+                    } catch (error) {
+                      console.error('Erro ao processar imagens:', error);
+                      return; // Para a execução se houve erro no processamento
+                    }
+                  }
+                  
                   await onCreateProduct({
                     name: form.name,
                     price: Number(form.price),
@@ -90,10 +113,43 @@ const Products: React.FC = () => {
                     barcode: form.barcode || undefined,
                     weight: form.weight ? Number(form.weight) : undefined,
                     stock: form.stock ? Number(form.stock) : undefined,
-                    status: form.status
+                    status: form.status,
+                    images: productImages
                   });
                   setCurrentPage(1);
                   closeModal();
+                };
+
+                // Função para converter arquivo para base64
+                const fileToBase64 = (file: File): Promise<string> => {
+                  return new Promise((resolve, reject) => {
+                    const reader = new FileReader();
+                    reader.readAsDataURL(file);
+                    reader.onload = () => {
+                      const result = reader.result as string;
+                      // Remove o prefixo data:image/...;base64,
+                      const base64 = result.split(',')[1];
+                      resolve(base64);
+                    };
+                    reader.onerror = error => reject(error);
+                  });
+                };
+
+                // Handler para mudança de imagens
+                const handleImageChange = (event: React.ChangeEvent<HTMLInputElement>) => {
+                  const files = event.target.files;
+                  if (files) {
+                    const fileArray = Array.from(files);
+                    setForm(prev => ({ ...prev, images: [...prev.images, ...fileArray] }));
+                  }
+                };
+
+                // Remover imagem específica
+                const removeImage = (index: number) => {
+                  setForm(prev => ({
+                    ...prev,
+                    images: prev.images.filter((_, i) => i !== index)
+                  }));
                 };
 
                 return (
@@ -209,6 +265,59 @@ const Products: React.FC = () => {
                                 rows={3}
                                 style={{ width: '100%', padding: 8, borderRadius: 4, border: '1px solid #ccc', resize: 'vertical' }}
                               />
+                            </Box>
+                            
+                            <Box>
+                              <Text fontWeight="medium">Imagens do Produto</Text>
+                              <Box marginBottom="2">
+                                <Text fontSize="caption" color="neutral-textLow">
+                                  Formatos aceitos: .gif, .jpg, .png, .webp (máx. 10MB cada)
+                                </Text>
+                              </Box>
+                              <input
+                                type="file"
+                                accept=".gif,.jpg,.jpeg,.png,.webp"
+                                multiple
+                                onChange={handleImageChange}
+                                style={{ 
+                                  width: '100%', 
+                                  padding: 8, 
+                                  borderRadius: 4, 
+                                  border: '1px solid #ccc',
+                                  marginBottom: 8
+                                }}
+                              />
+                              {form.images.length > 0 && (
+                                <Box marginTop="2">
+                                  <Box marginBottom="1">
+                                    <Text fontSize="caption" fontWeight="medium">
+                                      Imagens selecionadas ({form.images.length}):
+                                    </Text>
+                                  </Box>
+                                  {form.images.map((file, index) => (
+                                    <Box 
+                                      key={index} 
+                                      display="flex" 
+                                      justifyContent="space-between" 
+                                      alignItems="center"
+                                      padding="2"
+                                      backgroundColor="neutral-surface"
+                                      borderRadius="4"
+                                      marginBottom="1"
+                                    >
+                                      <Text fontSize="caption">
+                                        {file.name} ({(file.size / 1024 / 1024).toFixed(2)}MB)
+                                      </Text>
+                                      <Button
+                                        appearance="danger"
+                                        onClick={() => removeImage(index)}
+                                      >
+                                        Remover
+                                      </Button>
+                                    </Box>
+                                  ))}
+                                </Box>
+                              )}
                             </Box>
                           </Box>
                         </Modal.Body>

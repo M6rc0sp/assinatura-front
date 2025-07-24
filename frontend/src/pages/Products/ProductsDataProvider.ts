@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { useToast } from '@nimbus-ds/components';
 import { useFetch } from '@/hooks';
-import { IProduct, IProductsDataProvider } from './products.types';
+import { IProduct, IProductsDataProvider, IProductImage } from './products.types';
 import { useSellerId } from '@/hooks/useSellerId/useSellerId';
 
 const ProductsDataProvider: React.FC<IProductsDataProvider> = ({
@@ -21,6 +21,46 @@ const ProductsDataProvider: React.FC<IProductsDataProvider> = ({
       return true;
     }
     return false;
+  };
+
+  // Função para validar imagens do produto
+  const validateProductImages = (images?: IProductImage[]): string | null => {
+    if (!images || images.length === 0) return null;
+
+    const MAX_SIZE_MB = 10;
+    const ALLOWED_FORMATS = ['.gif', '.jpg', '.jpeg', '.png', '.webp'];
+
+    for (const image of images) {
+      // Validar formato se temos filename
+      if (image.filename) {
+        const extension = image.filename.toLowerCase().substring(image.filename.lastIndexOf('.'));
+        if (!ALLOWED_FORMATS.includes(extension)) {
+          return `Formato de imagem não suportado: ${extension}. Use: ${ALLOWED_FORMATS.join(', ')}`;
+        }
+      }
+
+      // Validar tamanho se temos attachment (base64)
+      if (image.attachment) {
+        try {
+          // Calcular tamanho aproximado do base64 (75% do tamanho original)
+          const sizeInBytes = (image.attachment.length * 3) / 4;
+          const sizeInMB = sizeInBytes / (1024 * 1024);
+          
+          if (sizeInMB > MAX_SIZE_MB) {
+            return `Imagem muito grande (${sizeInMB.toFixed(1)}MB). Máximo permitido: ${MAX_SIZE_MB}MB`;
+          }
+        } catch (error) {
+          return 'Erro ao processar imagem em base64';
+        }
+      }
+
+      // Validar posição
+      if (!image.position || image.position < 1) {
+        return 'Posição da imagem deve ser maior que 0';
+      }
+    }
+
+    return null;
   };
 
   const onGetProducts = () => {
@@ -147,7 +187,7 @@ const ProductsDataProvider: React.FC<IProductsDataProvider> = ({
   };
 
   const onCreateProduct = async (data: { 
-    name: string; 
+    name: string | { pt?: string; es?: string }; 
     price: number; 
     description: string;
     subscription_price?: number;
@@ -156,8 +196,24 @@ const ProductsDataProvider: React.FC<IProductsDataProvider> = ({
     weight?: number;
     stock?: number;
     status?: string;
+    images?: IProductImage[];
   }) => {
     if (!sellerId) return;
+    
+    // Validar imagens antes de enviar
+    if (data.images) {
+      const imageValidationError = validateProductImages(data.images);
+      if (imageValidationError) {
+        addToast({
+          type: 'danger',
+          text: `Erro na validação de imagem: ${imageValidationError}`,
+          duration: 8000,
+          id: 'error-image-validation',
+        });
+        return;
+      }
+    }
+    
     setIsLoading(true);
     try {
       await request({
@@ -185,7 +241,7 @@ const ProductsDataProvider: React.FC<IProductsDataProvider> = ({
   };
 
   const onEditProduct = async (productId: number, data: {
-    name: string; 
+    name: string | { pt?: string; es?: string }; 
     price: number; 
     description: string;
     subscription_price?: number;
@@ -194,8 +250,24 @@ const ProductsDataProvider: React.FC<IProductsDataProvider> = ({
     weight?: number;
     stock?: number;
     status?: string;
+    images?: IProductImage[];
   }) => {
     if (!sellerId) return;
+    
+    // Validar imagens antes de enviar
+    if (data.images) {
+      const imageValidationError = validateProductImages(data.images);
+      if (imageValidationError) {
+        addToast({
+          type: 'danger',
+          text: `Erro na validação de imagem: ${imageValidationError}`,
+          duration: 8000,
+          id: 'error-image-validation-edit',
+        });
+        return;
+      }
+    }
+    
     setIsLoading(true);
     try {
       await request({
