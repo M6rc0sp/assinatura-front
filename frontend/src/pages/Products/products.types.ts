@@ -30,7 +30,7 @@ interface IVariant {
   inventory_levels: IInventoryLevel[];
 }
 
-interface IImage {
+export interface IImage {
   id: number;
   product_id: number;
   src: string;

@@ -3,7 +3,7 @@ import { Box, IconButton, Table, Text, Thumbnail, Modal, Button } from "@nimbus-
 import { TrashIcon, InfoCircleIcon, UploadIcon } from "@nimbus-ds/icons";
 
 import { Translator } from "@/app/I18n";
-import { IProduct } from "../../products.types";
+import { IProduct, IProductImage } from "../../products.types";
 
 type Props = {
   products: IProduct[];
@@ -19,6 +19,7 @@ type Props = {
     weight?: number;
     stock?: number;
     status?: string;
+    images?: IProductImage[];
   }) => Promise<void>;
   isLoading?: boolean;
 };
@@ -36,6 +37,7 @@ const ListDesktop: React.FC<Props> = ({ products, onDeleteProduct, onSyncProduct
     weight: string;
     stock: string;
     status: string;
+    images: File[];
   }>({ 
     name: '', 
     price: '', 
@@ -45,7 +47,8 @@ const ListDesktop: React.FC<Props> = ({ products, onDeleteProduct, onSyncProduct
     barcode: '',
     weight: '',
     stock: '',
-    status: 'active'
+    status: 'active',
+    images: []
   });
   const [editLoading, setEditLoading] = useState(false);
 
@@ -79,7 +82,8 @@ const ListDesktop: React.FC<Props> = ({ products, onDeleteProduct, onSyncProduct
       barcode: product.barcode || '',
       weight: product.weight ? String(product.weight) : '',
       stock: product.stock ? String(product.stock) : '',
-      status: product.status || 'active'
+      status: product.status || 'active',
+      images: []
     });
   };
 
@@ -92,6 +96,28 @@ const ListDesktop: React.FC<Props> = ({ products, onDeleteProduct, onSyncProduct
   const handleEditProduct = async () => {
     if (!selectedProduct) return;
     setEditLoading(true);
+    
+    // Converter imagens para base64 se houver
+    let productImages = undefined;
+    if (editForm.images.length > 0) {
+      try {
+        productImages = await Promise.all(
+          editForm.images.map(async (file, index) => {
+            const base64 = await fileToBase64(file);
+            return {
+              attachment: base64,
+              filename: file.name,
+              position: index + 1
+            };
+          })
+        );
+      } catch (error) {
+        console.error('Erro ao processar imagens:', error);
+        setEditLoading(false);
+        return;
+      }
+    }
+
     await onEditProduct(selectedProduct.id, {
       name: editForm.name,
       price: Number(editForm.price),
@@ -101,11 +127,44 @@ const ListDesktop: React.FC<Props> = ({ products, onDeleteProduct, onSyncProduct
       barcode: editForm.barcode,
       weight: editForm.weight ? Number(editForm.weight) : undefined,
       stock: editForm.stock ? Number(editForm.stock) : undefined,
-      status: editForm.status
+      status: editForm.status,
+      images: productImages
     });
     setEditLoading(false);
     setIsEditing(false);
     setSelectedProduct(null);
+  };
+
+  // Função para converter arquivo para base64
+  const fileToBase64 = (file: File): Promise<string> => {
+    return new Promise((resolve, reject) => {
+      const reader = new FileReader();
+      reader.readAsDataURL(file);
+      reader.onload = () => {
+        const result = reader.result as string;
+        // Remove o prefixo data:image/...;base64,
+        const base64 = result.split(',')[1];
+        resolve(base64);
+      };
+      reader.onerror = error => reject(error);
+    });
+  };
+
+  // Handler para mudança de imagens
+  const handleImageChange = (event: React.ChangeEvent<HTMLInputElement>) => {
+    const files = event.target.files;
+    if (files) {
+      const fileArray = Array.from(files);
+      setEditForm(prev => ({ ...prev, images: [...prev.images, ...fileArray] }));
+    }
+  };
+
+  // Remover imagem específica
+  const removeImage = (index: number) => {
+    setEditForm(prev => ({
+      ...prev,
+      images: prev.images.filter((_, i) => i !== index)
+    }));
   };
 
   const handleCloseModal = () => {
@@ -325,6 +384,62 @@ const ListDesktop: React.FC<Props> = ({ products, onDeleteProduct, onSyncProduct
                       placeholder="Descrição"
                       style={{ width: '100%', padding: 8, borderRadius: 4, border: '1px solid #ccc', resize: 'vertical' }}
                     />
+                    
+                    {/* Campo para upload de novas imagens */}
+                    <Box>
+                      <Box marginBottom="2">
+                        <Text fontWeight="medium">Adicionar Novas Imagens</Text>
+                      </Box>
+                      <Box marginBottom="2">
+                        <Text fontSize="caption" color="neutral-textLow">
+                          Formatos aceitos: .gif, .jpg, .png, .webp (máx. 10MB cada)
+                        </Text>
+                      </Box>
+                      <input
+                        type="file"
+                        accept=".gif,.jpg,.jpeg,.png,.webp"
+                        multiple
+                        onChange={handleImageChange}
+                        style={{ 
+                          width: '100%', 
+                          padding: 8, 
+                          borderRadius: 4, 
+                          border: '1px solid #ccc',
+                          marginBottom: 8
+                        }}
+                      />
+                      {editForm.images.length > 0 && (
+                        <Box marginTop="2">
+                          <Box marginBottom="1">
+                            <Text fontSize="caption" fontWeight="medium">
+                              Novas imagens selecionadas ({editForm.images.length}):
+                            </Text>
+                          </Box>
+                          {editForm.images.map((file, index) => (
+                            <Box 
+                              key={index} 
+                              display="flex" 
+                              justifyContent="space-between" 
+                              alignItems="center"
+                              padding="2"
+                              backgroundColor="neutral-surface"
+                              borderRadius="1"
+                              marginBottom="1"
+                            >
+                              <Text fontSize="caption">
+                                {file.name} ({(file.size / 1024 / 1024).toFixed(2)}MB)
+                              </Text>
+                              <Button
+                                appearance="danger"
+                                onClick={() => removeImage(index)}
+                              >
+                                Remover
+                              </Button>
+                            </Box>
+                          ))}
+                        </Box>
+                      )}
+                    </Box>
                   </Box>
                 ) : (
                   <>
