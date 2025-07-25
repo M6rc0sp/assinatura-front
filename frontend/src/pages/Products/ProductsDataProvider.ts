@@ -90,14 +90,10 @@ const ProductsDataProvider: React.FC<IProductsDataProvider> = ({
         
         // Caso a resposta esteja no formato { success: true, data: [...] }
         if (response.content && response.content.data && Array.isArray(response.content.data)) {
-          console.log('Produtos recebidos:', response.content.data);
-          console.log('Primeira imagem do primeiro produto:', response.content.data[0]?.images);
           setProduts(response.content.data);
         }
         // Caso a resposta seja diretamente o array 
         else if (Array.isArray(response.content)) {
-          console.log('Produtos recebidos (array direto):', response.content);
-          console.log('Primeira imagem do primeiro produto:', response.content[0]?.images);
           setProduts(response.content);
         }
         // Se a resposta não estiver em nenhum formato esperado

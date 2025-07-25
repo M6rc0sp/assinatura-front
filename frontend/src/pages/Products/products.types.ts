@@ -31,13 +31,15 @@ interface IVariant {
 }
 
 export interface IImage {
-  id: number;
-  product_id: number;
-  src: string;
-  position: number;
-  alt: any[];
-  created_at: string;
-  updated_at: string;
+  id?: number;
+  product_id?: number;
+  src?: string;                // URL da imagem (quando vem do servidor)
+  attachment?: string;         // Base64 da imagem (quando enviada/recebida)
+  filename?: string;           // Nome do arquivo
+  position?: number;
+  alt?: any[];
+  created_at?: string;
+  updated_at?: string;
 }
 
 // Interface para upload de imagens no cadastro/edição

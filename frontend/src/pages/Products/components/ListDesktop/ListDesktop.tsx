@@ -229,24 +229,33 @@ const ListDesktop: React.FC<Props> = ({ products, onDeleteProduct, onSyncProduct
               <Table.Cell>
                 <Box display="flex" gap="2" alignItems="center">
                   {(() => {
-                    // Debug: vamos ver o que tem nas imagens
-                    console.log('Produto:', product.id, 'Images:', product.images);
-                    
-                    if (product.images && Array.isArray(product.images) && product.images.length > 0 && product.images[0]?.src) {
-                      console.log('Mostrando imagem:', product.images[0].src);
-                      return (
-                        <Thumbnail
-                          src={product.images[0].src}
-                          width="36px"
-                          alt={getProductName(product)}
-                        />
-                      );
-                    } else {
-                      console.log('Sem imagem para produto:', product.id);
-                      return (
-                        <Box width="36px" height="36px" backgroundColor="neutral-background" />
-                      );
+                    if (product.images && Array.isArray(product.images) && product.images.length > 0) {
+                      const firstImage = product.images[0];
+                      
+                      // Suporte tanto para src (URL) quanto attachment (base64)
+                      if (firstImage?.src) {
+                        return (
+                          <Thumbnail
+                            src={firstImage.src}
+                            width="36px"
+                            alt={getProductName(product)}
+                          />
+                        );
+                      } else if (firstImage?.attachment) {
+                        const base64Url = `data:image/png;base64,${firstImage.attachment}`;
+                        return (
+                          <Thumbnail
+                            src={base64Url}
+                            width="36px"
+                            alt={getProductName(product)}
+                          />
+                        );
+                      }
                     }
+                    
+                    return (
+                      <Box width="36px" height="36px" backgroundColor="neutral-background" />
+                    );
                   })()}
                   {getProductName(product)}
                 </Box>
@@ -294,15 +303,35 @@ const ListDesktop: React.FC<Props> = ({ products, onDeleteProduct, onSyncProduct
             <Modal.Body>
               <Box display="flex" flexDirection="column" gap="3">
                 <Box display="flex" alignItems="center" gap="3">
-                  {selectedProduct.images && Array.isArray(selectedProduct.images) && selectedProduct.images.length > 0 && selectedProduct.images[0]?.src ? (
-                    <Thumbnail
-                      src={selectedProduct.images[0].src}
-                      width="100px"
-                      alt={getProductName(selectedProduct)}
-                    />
-                  ) : (
-                    <Box width="100px" height="100px" backgroundColor="neutral-background" />
-                  )}
+                  {(() => {
+                    if (selectedProduct.images && Array.isArray(selectedProduct.images) && selectedProduct.images.length > 0) {
+                      const firstImage = selectedProduct.images[0];
+                      
+                      // Suporte tanto para src (URL) quanto attachment (base64)
+                      if (firstImage?.src) {
+                        return (
+                          <Thumbnail
+                            src={firstImage.src}
+                            width="100px"
+                            alt={getProductName(selectedProduct)}
+                          />
+                        );
+                      } else if (firstImage?.attachment) {
+                        const base64Url = `data:image/png;base64,${firstImage.attachment}`;
+                        return (
+                          <Thumbnail
+                            src={base64Url}
+                            width="100px"
+                            alt={getProductName(selectedProduct)}
+                          />
+                        );
+                      }
+                    }
+                    
+                    return (
+                      <Box width="100px" height="100px" backgroundColor="neutral-background" />
+                    );
+                  })()}
                   
                   <Box display="flex" flexDirection="column" gap="1">
                     <Text fontWeight="bold">{getProductName(selectedProduct)}</Text>
