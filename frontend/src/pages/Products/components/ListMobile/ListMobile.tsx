@@ -198,16 +198,27 @@ const ListMobile: React.FC<Props> = ({ products, onDeleteProduct, onSyncProduct,
       {products.map((product) => (
         <DataList.Row key={product.id} flexDirection="row" width="100%" gap="2">
           <Box display="flex" gap="2" flex="1 1 auto">
-            {product.images && Array.isArray(product.images) && product.images.length > 0 && product.images[0]?.src ? (
-              <Thumbnail
-                key={product.images[0].id}
-                src={product.images[0].src}
-                width="54px"
-                alt={getProductName(product)}
-              />
-            ) : (
-              <Box width="54px" height="54px" backgroundColor="neutral-background" />
-            )}
+            {(() => {
+              // Debug: vamos ver o que tem nas imagens
+              console.log('Produto Mobile:', product.id, 'Images:', product.images);
+              
+              if (product.images && Array.isArray(product.images) && product.images.length > 0 && product.images[0]?.src) {
+                console.log('Mostrando imagem Mobile:', product.images[0].src);
+                return (
+                  <Thumbnail
+                    key={product.images[0].id}
+                    src={product.images[0].src}
+                    width="54px"
+                    alt={getProductName(product)}
+                  />
+                );
+              } else {
+                console.log('Sem imagem para produto Mobile:', product.id);
+                return (
+                  <Box width="54px" height="54px" backgroundColor="neutral-background" />
+                );
+              }
+            })()}
 
             <Box
               display="flex"

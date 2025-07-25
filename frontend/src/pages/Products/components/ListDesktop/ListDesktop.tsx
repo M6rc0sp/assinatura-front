@@ -228,15 +228,26 @@ const ListDesktop: React.FC<Props> = ({ products, onDeleteProduct, onSyncProduct
             <Table.Row key={product.id}>
               <Table.Cell>
                 <Box display="flex" gap="2" alignItems="center">
-                  {product.images && Array.isArray(product.images) && product.images.length > 0 && product.images[0]?.src ? (
-                    <Thumbnail
-                      src={product.images[0].src}
-                      width="36px"
-                      alt={getProductName(product)}
-                    />
-                  ) : (
-                    <Box width="36px" height="36px" backgroundColor="neutral-background" />
-                  )}
+                  {(() => {
+                    // Debug: vamos ver o que tem nas imagens
+                    console.log('Produto:', product.id, 'Images:', product.images);
+                    
+                    if (product.images && Array.isArray(product.images) && product.images.length > 0 && product.images[0]?.src) {
+                      console.log('Mostrando imagem:', product.images[0].src);
+                      return (
+                        <Thumbnail
+                          src={product.images[0].src}
+                          width="36px"
+                          alt={getProductName(product)}
+                        />
+                      );
+                    } else {
+                      console.log('Sem imagem para produto:', product.id);
+                      return (
+                        <Box width="36px" height="36px" backgroundColor="neutral-background" />
+                      );
+                    }
+                  })()}
                   {getProductName(product)}
                 </Box>
               </Table.Cell>
