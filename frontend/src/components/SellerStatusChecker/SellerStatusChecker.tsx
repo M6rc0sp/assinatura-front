@@ -119,7 +119,7 @@ const SellerStatusChecker: React.FC = () => {
       )}
       
       {/* Debug info - remover em produção */}
-      {process.env.NODE_ENV === 'development' && (
+      {import.meta.env.DEV && (
         <Box 
           position="fixed" 
           bottom="0" 
