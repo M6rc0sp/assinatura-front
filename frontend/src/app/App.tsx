@@ -3,6 +3,7 @@ import { BrowserRouter, useLocation } from 'react-router-dom';
 import { Box, Text, ToastProvider } from '@nimbus-ds/components';
 import { ErrorBoundary, connect, iAmReady } from '@tiendanube/nexo';
 import Router from '@/app/Router';
+import { SellerStatusChecker } from '@/components';
 
 import nexo from './NexoClient';
 import NexoSyncRoute from './NexoSyncRoute';
@@ -53,7 +54,10 @@ const AppContent: React.FC = () => {
   return (
     <ErrorBoundary nexo={nexo}>
       <NexoSyncRoute>
-        <Router />
+        <>
+          <Router />
+          <SellerStatusChecker />
+        </>
       </NexoSyncRoute>
     </ErrorBoundary>
   );
