@@ -4,6 +4,7 @@ import { useFetch } from '@/hooks';
 import { useSellerId } from '@/hooks/useSellerId/useSellerId';
 
 export interface SellerStatus {
+  needsDocuments: boolean;
   status: string;
   message?: string;
   // Adicione outros campos conforme necessário
@@ -40,19 +41,27 @@ export function useSellerStatus() {
       
       // Estrutura esperada da resposta
       const content = response.content as any;
+      // Debug: mostrar todos os campos recebidos
+      console.log('🟡 Conteúdo recebido:', content);
       
-      if (content && content.status) {
-        setSellerStatus(content);
+      // Ajuste para novo formato da API
+      if (content && (content.app_status || content.needsDocuments !== undefined)) {
+        // Monta o objeto SellerStatus usando app_status
+        setSellerStatus({
+          status: content.app_status || '',
+          message: content.message || '',
+          ...content
+        });
         
         // Debug log
-        console.log('✅ Status do seller carregado:', content.status);
+        console.log('✅ Status do seller carregado:', content.app_status);
         
         // Se o status não for 'active', mostrar alerta
-        if (content.status !== 'active') {
-          console.log('⚠️ Status do seller não é "active":', content.status);
+        if (content.app_status !== 'active') {
+          console.log('⚠️ Status do seller não é "active":', content.app_status);
           addToast({
             type: 'danger',
-            text: `Status do seller: ${content.status}. Pode ser necessário completar documentos.`,
+            text: `Status do seller: ${content.app_status}. Pode ser necessário completar documentos.`,
             duration: 8000,
             id: 'seller-status-warning',
           });
@@ -141,6 +150,7 @@ export function useSellerStatus() {
     error,
     checkSellerStatus,
     completeSellerDocuments,
-    needsDocuments: sellerStatus ? sellerStatus.status !== 'active' : false,
+    // Considera needsDocuments da API ou status diferente de active
+    needsDocuments: sellerStatus ? (sellerStatus.status !== 'active' || sellerStatus.needsDocuments === true) : false,
   };
 }
