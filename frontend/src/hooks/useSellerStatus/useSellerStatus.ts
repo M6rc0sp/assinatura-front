@@ -32,7 +32,7 @@ export function useSellerStatus() {
       console.log('🔍 Verificando status do seller:', sellerId);
       
       const response = await request({
-        url: `/app/seller/documents/${sellerId}/status`,
+        url: `/app/documents/${sellerId}/status`,
         method: 'GET',
       });
       
