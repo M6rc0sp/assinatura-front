@@ -44,24 +44,31 @@ export function useSellerStatus() {
       // Debug: mostrar todos os campos recebidos
       console.log('🟡 Conteúdo recebido:', content);
       
-      // Ajuste para novo formato da API
-      if (content && (content.app_status || content.needsDocuments !== undefined)) {
+      // Ajuste para novo formato da API - dados estão em content.data
+      const data = content?.data;
+      
+      if (data && (data.app_status || data.needsDocuments !== undefined)) {
         // Monta o objeto SellerStatus usando app_status
         setSellerStatus({
-          status: content.app_status || '',
-          message: content.message || '',
-          ...content
+          status: data.app_status || '',
+          message: data.message || '',
+          needsDocuments: data.needsDocuments || false,
+          ...data
         });
         
         // Debug log
-        console.log('✅ Status do seller carregado:', content.app_status);
+        console.log('✅ Status do seller carregado:', data.app_status);
+        console.log('✅ Needs documents:', data.needsDocuments);
         
-        // Se o status não for 'active', mostrar alerta
-        if (content.app_status !== 'active') {
-          console.log('⚠️ Status do seller não é "active":', content.app_status);
+        // Se o status não for 'active' OU needsDocuments for true, mostrar alerta
+        if (data.app_status !== 'active' || data.needsDocuments === true) {
+          console.log('⚠️ Seller precisa completar documentos:', {
+            app_status: data.app_status,
+            needsDocuments: data.needsDocuments
+          });
           addToast({
             type: 'danger',
-            text: `Status do seller: ${content.app_status}. Pode ser necessário completar documentos.`,
+            text: `Status do seller: ${data.app_status}. É necessário completar documentos.`,
             duration: 8000,
             id: 'seller-status-warning',
           });
