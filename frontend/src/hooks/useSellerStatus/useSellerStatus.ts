@@ -68,7 +68,7 @@ export function useSellerStatus() {
           });
           addToast({
             type: 'danger',
-            text: `Status do seller: ${data.app_status}. É necessário completar documentos.`,
+            text: `Status do seller: ${data.app_status}. É necessário completar documentos/assinatura.`,
             duration: 8000,
             id: 'seller-status-warning',
           });
@@ -110,7 +110,7 @@ export function useSellerStatus() {
       console.log('📝 Completando documentos do seller:', sellerId, data);
       
       const response = await request({
-        url: `/app/documents/${sellerId}/complete`,
+        url: `/seller/documents/${sellerId}/complete`,
         method: 'POST',
         data,
       });
@@ -119,7 +119,8 @@ export function useSellerStatus() {
       
       addToast({
         type: 'success',
-        text: 'Documentos do seller completados com sucesso!',
+        text: 'Documentos do seller completados com sucesso!'
+        ,
         duration: 4000,
         id: 'seller-documents-completed',
       });
@@ -151,6 +152,8 @@ export function useSellerStatus() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [sellerId]);
 
+  const needsCard = !!(sellerStatus && !sellerStatus.needsDocuments && sellerStatus.status && sellerStatus.status !== 'active');
+
   return {
     sellerStatus,
     isLoading,
@@ -158,6 +161,7 @@ export function useSellerStatus() {
     checkSellerStatus,
     completeSellerDocuments,
     // Considera needsDocuments da API ou status diferente de active
-    needsDocuments: sellerStatus ? (sellerStatus.status !== 'active' || sellerStatus.needsDocuments === true) : false,
+    needsDocuments: sellerStatus ? (sellerStatus.status !== 'active' && sellerStatus.needsDocuments === true) : false,
+    needsCard,
   };
 }

@@ -1,137 +1,158 @@
 import React, { useState } from 'react';
 import { Box, Text, Modal, Button, Input } from '@nimbus-ds/components';
 import { useSellerStatus } from '@/hooks/useSellerStatus';
+import { useSellerSubscriptionCard } from '@/hooks';
 
 const SellerStatusChecker: React.FC = () => {
   const { 
     sellerStatus, 
     isLoading, 
     needsDocuments, 
+    needsCard,
     completeSellerDocuments 
   } = useSellerStatus();
+  const { createSellerSubscription, isSubmitting } = useSellerSubscriptionCard();
   
   const [showModal, setShowModal] = useState<boolean>(false);
   const [cpfCnpj, setCpfCnpj] = useState<string>('');
-  const [submitting, setSubmitting] = useState<boolean>(false);
 
-  // Mostrar o modal automaticamente quando precisar de documentos
+  // Campos de cartão
+  const [card, setCard] = useState({
+    holderName: '',
+    number: '',
+    expiryMonth: '',
+    expiryYear: '',
+    ccv: '',
+  });
+  const [billing, setBilling] = useState({
+    name: '',
+    email: '',
+    cpfCnpj: '',
+    phone: '',
+    remoteIp: '',
+  });
+
+  // Mostrar o modal automaticamente quando precisar de documentos ou cartão
   React.useEffect(() => {
-    if (needsDocuments && !isLoading) {
-      console.log('🔍 Seller precisa completar documentos, mostrando modal');
+    if (!isLoading && (needsDocuments || needsCard)) {
+      console.log('🔍 Seller precisa completar informações/assinatura, mostrando modal', { needsDocuments, needsCard });
       setShowModal(true);
     }
-  }, [needsDocuments, isLoading]);
+  }, [needsDocuments, needsCard, isLoading]);
 
-  const handleSubmit = async () => {
-    if (!cpfCnpj.trim()) {
-      console.log('❌ CPF/CNPJ não informado');
-      return;
-    }
+  const handleSubmitDocs = async () => {
+    const clean = (v: string) => (v || '').replace(/\D/g, '');
+    if (!clean(cpfCnpj)) return;
 
-    setSubmitting(true);
-    
-    console.log('📝 Enviando dados para completar:', { cpfCnpj });
-    
-    const success = await completeSellerDocuments({ cpfCnpj });
-    
-    if (success) {
+    console.log('📝 Enviando CPF/CNPJ:', { cpfCnpj });
+    const success = await completeSellerDocuments({ cpfCnpj: clean(cpfCnpj) });
+    if (success) setCpfCnpj('');
+  };
+
+  const handleSubmitCard = async () => {
+    // Montar payload conforme especificação
+    const payload = {
+      planData: {
+        plan_name: 'Plano Pro',
+        value: 29.9,
+        cycle: 'MONTHLY',
+      },
+      billingInfo: {
+        billingType: 'CREDIT_CARD' as const,
+        name: billing.name,
+        email: billing.email,
+        cpfCnpj: billing.cpfCnpj,
+        phone: billing.phone,
+        remoteIp: billing.remoteIp || undefined,
+        creditCard: {
+          holderName: card.holderName,
+          number: card.number,
+          expiryMonth: card.expiryMonth,
+          expiryYear: card.expiryYear,
+          ccv: card.ccv,
+        },
+      },
+    };
+
+    const res = await createSellerSubscription(payload);
+    if (res.success) {
+      // Fecha modal apenas quando assinatura concluída com sucesso
       setShowModal(false);
-      setCpfCnpj('');
-      console.log('✅ Documentos completados com sucesso');
     }
-    
-    setSubmitting(false);
   };
 
-  const handleClose = () => {
-    setShowModal(false);
-    setCpfCnpj('');
-  };
-
-  // Debug logs
-  React.useEffect(() => {
-    console.log('🔍 SellerStatusChecker - Status atual:', {
-      sellerStatus,
-      isLoading,
-      needsDocuments,
-      showModal
-    });
-  }, [sellerStatus, isLoading, needsDocuments, showModal]);
+  // Bloqueia fechar enquanto ainda precisa de docs ou cartão
+  const canDismiss = !(needsDocuments || needsCard);
 
   return (
     <>
       {showModal && (
-        <Modal open={showModal} onDismiss={handleClose}>
+        <Modal open={showModal} onDismiss={canDismiss ? () => setShowModal(false) : undefined}>
           <Modal.Header>
-            <Text fontWeight="bold">Completar Informações do Seller</Text>
+            <Text fontWeight="bold">{needsDocuments ? 'Completar informações do Seller' : 'Finalizar assinatura do Seller'}</Text>
           </Modal.Header>
           <Modal.Body>
-            <Box display="flex" flexDirection="column" gap="3">
-              <Text>
-                {sellerStatus?.message || 
-                 'É necessário completar as informações do seller para continuar.'}
-              </Text>
-              
-              <Box display="flex" flexDirection="column" gap="2">
+            <Box display="flex" flexDirection="column" gap="4">
+              <Box>
                 <Text fontWeight="medium">Status atual:</Text>
-                <Box 
-                  padding="2" 
-                  backgroundColor="neutral-surface" 
-                  borderRadius="1"
-                >
-                  <Text>
-                    {sellerStatus?.status || 'Unknown'}
-                  </Text>
+                <Box padding="2" backgroundColor="neutral-surface" borderRadius="1">
+                  <Text>{sellerStatus?.status || 'Unknown'}</Text>
                 </Box>
               </Box>
-              
-              <Box display="flex" flexDirection="column" gap="2">
-                <Text fontWeight="medium">Informe o CPF ou CNPJ:</Text>
-                <Input
-                  placeholder="Digite o CPF ou CNPJ (somente números)"
-                  value={cpfCnpj}
-                  onChange={(e) => setCpfCnpj(e.target.value)}
-                  disabled={submitting}
-                />
-                <Text fontSize="caption" color="neutral-textLow">
-                  Debug: Este campo será enviado para a API para completar os documentos do seller.
-                </Text>
-              </Box>
+
+              {needsDocuments && (
+                <Box display="flex" flexDirection="column" gap="2">
+                  <Text fontWeight="medium">Informe o CPF ou CNPJ:</Text>
+                  <Input
+                    placeholder="Digite o CPF ou CNPJ (somente números)"
+                    value={cpfCnpj}
+                    onChange={(e) => setCpfCnpj(e.target.value)}
+                  />
+                  <Button appearance="primary" onClick={handleSubmitDocs} disabled={!cpfCnpj}>
+                    Enviar documento
+                  </Button>
+                </Box>
+              )}
+
+              {needsCard && (
+                <Box display="flex" flexDirection="column" gap="2">
+                  <Text fontWeight="medium">Dados de cobrança</Text>
+                  <Input placeholder="Nome" value={billing.name} onChange={(e) => setBilling({ ...billing, name: e.target.value })} />
+                  <Input placeholder="Email" value={billing.email} onChange={(e) => setBilling({ ...billing, email: e.target.value })} />
+                  <Input placeholder="CPF/CNPJ" value={billing.cpfCnpj} onChange={(e) => setBilling({ ...billing, cpfCnpj: e.target.value })} />
+                  <Input placeholder="Telefone" value={billing.phone} onChange={(e) => setBilling({ ...billing, phone: e.target.value })} />
+                  <Input placeholder="IP remoto (opcional)" value={billing.remoteIp} onChange={(e) => setBilling({ ...billing, remoteIp: e.target.value })} />
+
+                  <Text fontWeight="medium">Cartão</Text>
+                  <Input placeholder="Titular" value={card.holderName} onChange={(e) => setCard({ ...card, holderName: e.target.value })} />
+                  <Input placeholder="Número" value={card.number} onChange={(e) => setCard({ ...card, number: e.target.value })} />
+                  <Box display="flex" gap="2">
+                    <Input placeholder="MM" value={card.expiryMonth} onChange={(e) => setCard({ ...card, expiryMonth: e.target.value })} />
+                    <Input placeholder="YYYY" value={card.expiryYear} onChange={(e) => setCard({ ...card, expiryYear: e.target.value })} />
+                    <Input placeholder="CVV" value={card.ccv} onChange={(e) => setCard({ ...card, ccv: e.target.value })} />
+                  </Box>
+
+                  <Button appearance="primary" onClick={handleSubmitCard} disabled={isSubmitting}>
+                    {isSubmitting ? 'Enviando...' : 'Pagar e ativar assinatura'}
+                  </Button>
+                </Box>
+              )}
             </Box>
           </Modal.Body>
-          <Modal.Footer>
-            <Button 
-              appearance="primary" 
-              onClick={handleSubmit}
-              disabled={submitting || !cpfCnpj.trim()}
-            >
-              {submitting ? 'Enviando...' : 'Completar Documentos'}
-            </Button>
-            <Button 
-              appearance="neutral" 
-              onClick={handleClose}
-              disabled={submitting}
-            >
-              Fechar
-            </Button>
-          </Modal.Footer>
+          {!canDismiss && (
+            <Modal.Footer>
+              <Text color="danger-textLow">Finalize para continuar. O fechamento está bloqueado.</Text>
+            </Modal.Footer>
+          )}
         </Modal>
       )}
-      
-      {/* Debug info - remover em produção */}
+
       {import.meta.env.DEV && (
-        <Box 
-          position="fixed" 
-          bottom="0" 
-          right="0" 
-          backgroundColor="neutral-surface" 
-          padding="2"
-          borderRadius="1"
-          margin="2"
-        >
+        <Box position="fixed" bottom="0" right="0" backgroundColor="neutral-surface" padding="2" borderRadius="1" margin="2">
           <Text fontWeight="bold" fontSize="caption">Debug - Seller Status:</Text>
           <Text fontSize="caption">Status: {sellerStatus?.status || 'Loading...'}</Text>
           <Text fontSize="caption">Needs Docs: {needsDocuments ? 'Yes' : 'No'}</Text>
+          <Text fontSize="caption">Needs Card: {needsCard ? 'Yes' : 'No'}</Text>
           <Text fontSize="caption">Loading: {isLoading ? 'Yes' : 'No'}</Text>
         </Box>
       )}
