@@ -45,7 +45,6 @@ export default defineConfig({
         secure: false,
       }
     },
-    // allowedHosts: ['assinaturas.appns.com.br']
-    allowedHosts: ['*']
+    allowedHosts: ['assinaturas.appns.com.br']
   }
 });
