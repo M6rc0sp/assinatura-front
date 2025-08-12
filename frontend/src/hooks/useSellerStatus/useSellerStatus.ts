@@ -110,7 +110,7 @@ export function useSellerStatus() {
       console.log('📝 Completando documentos do seller:', sellerId, data);
       
       const response = await request({
-        url: `/app/seller/documents/${sellerId}/complete`,
+        url: `/app/documents/${sellerId}/complete`,
         method: 'POST',
         data,
       });
