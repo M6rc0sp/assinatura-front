@@ -28,8 +28,7 @@ const SellerStatusChecker: React.FC = () => {
     name: '',
     email: '',
     cpfCnpj: '',
-    phone: '',
-    remoteIp: '',
+  phone: '',
   });
 
   // Mostrar o modal automaticamente quando precisar de documentos ou cartão
@@ -39,6 +38,26 @@ const SellerStatusChecker: React.FC = () => {
       setShowModal(true);
     }
   }, [needsDocuments, needsCard, isLoading]);
+
+  // Prefill automático dos dados do seller quando disponível (sem pedir ID manual)
+  React.useEffect(() => {
+    if (!sellerStatus) return;
+    // Tenta extrair nome/email/cpf de diferentes caminhos
+    const data: any = sellerStatus;
+    const storeName = data.store_name || data.name || '';
+    const storeEmail = data.store_email || data.email || '';
+    const cpf = (data.cpfCnpj
+      || data.userData?.cpfCnpj
+      || data.user?.userData?.cpfCnpj
+      || '').toString();
+
+    setBilling((prev) => ({
+      ...prev,
+      name: prev.name || storeName,
+      email: prev.email || storeEmail,
+      cpfCnpj: prev.cpfCnpj || cpf,
+    }));
+  }, [sellerStatus]);
 
   const handleSubmitDocs = async () => {
     const clean = (v: string) => (v || '').replace(/\D/g, '');
@@ -63,13 +82,22 @@ const SellerStatusChecker: React.FC = () => {
         email: billing.email,
         cpfCnpj: billing.cpfCnpj,
         phone: billing.phone,
-        remoteIp: billing.remoteIp || undefined,
         creditCard: {
           holderName: card.holderName,
           number: card.number,
           expiryMonth: card.expiryMonth,
           expiryYear: card.expiryYear,
           ccv: card.ccv,
+        },
+        // Envia Holder Info recomendado para antifraude
+        creditCardHolderInfo: {
+          name: billing.name || card.holderName,
+          email: billing.email,
+          cpfCnpj: billing.cpfCnpj,
+          mobilePhone: billing.phone,
+          addressNumber: '0',
+          province: 'Default',
+          postalCode: '00000000',
         },
       },
     };
@@ -121,7 +149,7 @@ const SellerStatusChecker: React.FC = () => {
                   <Input placeholder="Email" value={billing.email} onChange={(e) => setBilling({ ...billing, email: e.target.value })} />
                   <Input placeholder="CPF/CNPJ" value={billing.cpfCnpj} onChange={(e) => setBilling({ ...billing, cpfCnpj: e.target.value })} />
                   <Input placeholder="Telefone" value={billing.phone} onChange={(e) => setBilling({ ...billing, phone: e.target.value })} />
-                  <Input placeholder="IP remoto (opcional)" value={billing.remoteIp} onChange={(e) => setBilling({ ...billing, remoteIp: e.target.value })} />
+                  {/* IP remoto não deve ser coletado no front. O backend deve inferir do request. */}
 
                   <Text fontWeight="medium">Cartão</Text>
                   <Input placeholder="Titular" value={card.holderName} onChange={(e) => setCard({ ...card, holderName: e.target.value })} />
