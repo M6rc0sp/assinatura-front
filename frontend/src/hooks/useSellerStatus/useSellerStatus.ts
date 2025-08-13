@@ -46,34 +46,47 @@ export function useSellerStatus() {
       
       // Ajuste para novo formato da API - dados estão em content.data
       const data = content?.data;
-      
-      if (data && (data.app_status || data.needsDocuments !== undefined)) {
-        // Monta o objeto SellerStatus usando app_status
-        setSellerStatus({
-          status: data.app_status || '',
-          message: data.message || '',
-          needsDocuments: data.needsDocuments || false,
-          ...data
-        });
-        
-        // Debug log
-        console.log('✅ Status do seller carregado:', data.app_status);
-        console.log('✅ Needs documents:', data.needsDocuments);
-        
-        // Se o status não for 'active' OU needsDocuments for true, mostrar alerta
-        if (data.app_status !== 'active' || data.needsDocuments === true) {
-          console.log('⚠️ Seller precisa completar documentos:', {
-            app_status: data.app_status,
-            needsDocuments: data.needsDocuments
-          });
+
+      if (data && (data.app_status !== undefined)) {
+        // Detectar CPF em possíveis caminhos (depende do backend expor)
+        const cpfFromData = (data as any)?.cpfCnpj
+          || (data as any)?.userData?.cpfCnpj
+          || (data as any)?.user?.userData?.cpfCnpj
+          || '';
+
+        // needsDocuments deve refletir a ausência de CPF no perfil
+        const computedNeedsDocuments = !cpfFromData || String(cpfFromData).replace(/\D/g, '').length === 0;
+
+        // Status da aplicação
+        const appStatus = data.app_status || '';
+
+        // Montar estado interno consolidado
+        const nextStatus = {
+          status: appStatus,
+          message: (data as any).message || '',
+          needsDocuments: computedNeedsDocuments,
+          ...data,
+        } as SellerStatus & Record<string, any>;
+
+        setSellerStatus(nextStatus);
+
+        // Debug detalhado
+        console.log('✅ Status do seller carregado:', appStatus);
+        console.log('ℹ️ needsDocuments (API):', (data as any).needsDocuments, '→ (computado por CPF ausente):', computedNeedsDocuments, 'cpf detectado:', cpfFromData ? 'sim' : 'não');
+
+        // Alerta somente quando de fato faltar documento (CPF) ou status não estiver ativo
+        if (computedNeedsDocuments || appStatus !== 'active') {
+          console.log('⚠️ Seller pendente:', { app_status: appStatus, computedNeedsDocuments });
           addToast({
             type: 'danger',
-            text: `Status do seller: ${data.app_status}. É necessário completar documentos/assinatura.`,
+            text: computedNeedsDocuments
+              ? 'É necessário informar CPF/CNPJ para continuar.'
+              : `Status do seller: ${appStatus}. Finalize a assinatura.`,
             duration: 8000,
             id: 'seller-status-warning',
           });
         } else {
-          console.log('✅ Status do seller está ativo');
+          console.log('✅ Seller ativo e com CPF informado');
         }
       } else {
         console.error('❌ Resposta de status inválida:', response);
@@ -152,7 +165,8 @@ export function useSellerStatus() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [sellerId]);
 
-  const needsCard = !!(sellerStatus && !sellerStatus.needsDocuments && sellerStatus.status && sellerStatus.status !== 'active');
+  // Mostrar cartão quando NÃO precisa de documentos (já tem CPF) e status ainda não é active
+  const needsCard = !!(sellerStatus && sellerStatus.needsDocuments === false && sellerStatus.status && sellerStatus.status !== 'active');
 
   return {
     sellerStatus,
@@ -160,8 +174,8 @@ export function useSellerStatus() {
     error,
     checkSellerStatus,
     completeSellerDocuments,
-    // Considera needsDocuments da API ou status diferente de active
-    needsDocuments: sellerStatus ? (sellerStatus.status !== 'active' && sellerStatus.needsDocuments === true) : false,
+  // Agora reflete apenas ausência de CPF (independente do app_status)
+  needsDocuments: !!(sellerStatus && sellerStatus.needsDocuments === true),
     needsCard,
   };
 }
