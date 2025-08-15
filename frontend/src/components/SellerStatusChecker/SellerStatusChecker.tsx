@@ -29,6 +29,7 @@ const SellerStatusChecker: React.FC = () => {
     email: '',
     cpfCnpj: '',
   phone: '',
+  postalCode: '',
   });
 
   // Mostrar o modal automaticamente quando precisar de documentos ou cartão
@@ -69,6 +70,7 @@ const SellerStatusChecker: React.FC = () => {
   };
 
   const handleSubmitCard = async () => {
+  const onlyDigits = (v: string) => (v || '').replace(/\D/g, '');
     // Montar payload conforme especificação
     const payload = {
       planData: {
@@ -97,7 +99,7 @@ const SellerStatusChecker: React.FC = () => {
           mobilePhone: billing.phone,
           addressNumber: '0',
           province: 'Default',
-          postalCode: '00000000',
+          postalCode: onlyDigits(billing.postalCode) || undefined,
         },
       },
     };
@@ -149,6 +151,7 @@ const SellerStatusChecker: React.FC = () => {
                   <Input placeholder="Email" value={billing.email} onChange={(e) => setBilling({ ...billing, email: e.target.value })} />
                   <Input placeholder="CPF/CNPJ" value={billing.cpfCnpj} onChange={(e) => setBilling({ ...billing, cpfCnpj: e.target.value })} />
                   <Input placeholder="Telefone" value={billing.phone} onChange={(e) => setBilling({ ...billing, phone: e.target.value })} />
+                  <Input placeholder="CEP" value={billing.postalCode} onChange={(e) => setBilling({ ...billing, postalCode: e.target.value })} />
                   {/* IP remoto não deve ser coletado no front. O backend deve inferir do request. */}
 
                   <Text fontWeight="medium">Cartão</Text>
