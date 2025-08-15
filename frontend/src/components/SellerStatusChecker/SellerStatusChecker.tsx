@@ -98,7 +98,6 @@ const SellerStatusChecker: React.FC = () => {
           cpfCnpj: billing.cpfCnpj,
           mobilePhone: billing.phone,
           addressNumber: '0',
-          province: 'Default',
           postalCode: onlyDigits(billing.postalCode) || undefined,
         },
       },

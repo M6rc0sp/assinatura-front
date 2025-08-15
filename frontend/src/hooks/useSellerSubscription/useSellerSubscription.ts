@@ -26,7 +26,6 @@ export interface CreditCardHolderInfo {
   cpfCnpj: string; // 11 ou 14 dígitos
   mobilePhone: string;
   addressNumber: string;
-  province: string; // UF
   postalCode: string; // 8 dígitos
 }
 

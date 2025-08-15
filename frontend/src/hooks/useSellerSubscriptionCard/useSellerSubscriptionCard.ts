@@ -25,7 +25,6 @@ export interface CreditCardHolderInfo {
   cpfCnpj?: string;
   mobilePhone?: string;
   addressNumber?: string;
-  province?: string;
   postalCode?: string;
 }
 
