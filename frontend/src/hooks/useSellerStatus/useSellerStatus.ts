@@ -7,6 +7,23 @@ export interface SellerStatus {
   needsDocuments: boolean;
   status: string;
   message?: string;
+  seller_id?: string | number | null;
+  has_asaas_integration?: boolean;
+  store_name?: string | null;
+  store_email?: string | null;
+  subscription_status?: string | null;
+  subscription_id?: string | number | null;
+  subscription_external_id?: string | null;
+  cpfCnpj?: string | null;
+  userData?: {
+    cpfCnpj?: string | null;
+    mobilePhone?: string | null;
+    address?: string | null;
+    addressNumber?: string | null;
+    province?: string | null;
+    postalCode?: string | null;
+    birthDate?: string | null;
+  } | null;
   // Adicione outros campos conforme necessário
 }
 
@@ -25,46 +42,58 @@ export function useSellerStatus() {
   // Função para verificar o status do seller
   const checkSellerStatus = async () => {
     if (!sellerId) return;
-    
+
     setIsLoading(true);
     setError(null);
-    
+
     try {
       console.log('🔍 Verificando status do seller:', sellerId);
-      
+
       const response = await request({
         url: `/app/documents/${sellerId}/status`,
         method: 'GET',
       });
-      
+
       console.log('📋 Resposta do status do seller:', response);
-      
+
       // Estrutura esperada da resposta
       const content = response.content as any;
       // Debug: mostrar todos os campos recebidos
       console.log('🟡 Conteúdo recebido:', content);
-      
+
       // Ajuste para novo formato da API - dados estão em content.data
       const data = content?.data;
 
       if (data && (data.app_status !== undefined)) {
-        // Detectar CPF em possíveis caminhos (depende do backend expor)
-        const cpfFromData = (data as any)?.cpfCnpj
-          || (data as any)?.userData?.cpfCnpj
-          || (data as any)?.user?.userData?.cpfCnpj
-          || '';
-
-        // needsDocuments deve refletir a ausência de CPF no perfil
-        const computedNeedsDocuments = !cpfFromData || String(cpfFromData).replace(/\D/g, '').length === 0;
-
-        // Status da aplicação
+        // Campos do contrato
         const appStatus = data.app_status || '';
+        const cpfTop: string | null = (data as any)?.cpfCnpj ?? null;
+        const cpfFromUserData: string | null = (data as any)?.userData?.cpfCnpj ?? null;
+        const cpfFromNestedUser: string | null = (data as any)?.user?.userData?.cpfCnpj ?? null;
+        // Detectar CPF em possíveis caminhos
+        const cpfFromData: string = (cpfTop || cpfFromUserData || cpfFromNestedUser || '') as string;
+
+        // needsDocuments: preferir o valor da API, com fallback pela ausência de CPF
+        const needsDocumentsFromAPI = typeof (data as any).needsDocuments === 'boolean' ? (data as any).needsDocuments : undefined;
+        const computedNeedsDocuments = needsDocumentsFromAPI ?? (!cpfFromData || String(cpfFromData).replace(/\D/g, '').length === 0);
+
+        // Helper de pendência
+        const isPending = !!appStatus && /^pending/.test(appStatus);
 
         // Montar estado interno consolidado
         const nextStatus = {
           status: appStatus,
           message: (data as any).message || '',
           needsDocuments: computedNeedsDocuments,
+          seller_id: (data as any).seller_id ?? null,
+          has_asaas_integration: !!(data as any).has_asaas_integration,
+          store_name: (data as any).store_name ?? null,
+          store_email: (data as any).store_email ?? null,
+          subscription_status: (data as any).subscription_status ?? null,
+          subscription_id: (data as any).subscription_id ?? null,
+          subscription_external_id: (data as any).subscription_external_id ?? null,
+          cpfCnpj: cpfTop,
+          userData: (data as any).userData ?? null,
           ...data,
         } as SellerStatus & Record<string, any>;
 
@@ -75,7 +104,7 @@ export function useSellerStatus() {
         console.log('ℹ️ needsDocuments (API):', (data as any).needsDocuments, '→ (computado por CPF ausente):', computedNeedsDocuments, 'cpf detectado:', cpfFromData ? 'sim' : 'não');
 
         // Alerta somente quando de fato faltar documento (CPF) ou status não estiver ativo
-        if (computedNeedsDocuments || appStatus !== 'active') {
+        if (computedNeedsDocuments || isPending) {
           console.log('⚠️ Seller pendente:', { app_status: appStatus, computedNeedsDocuments });
           addToast({
             type: 'danger',
@@ -115,21 +144,21 @@ export function useSellerStatus() {
   // Função para completar documentos do seller
   const completeSellerDocuments = async (data: SellerDocumentsData) => {
     if (!sellerId) return false;
-    
+
     setIsLoading(true);
     setError(null);
-    
+
     try {
       console.log('📝 Completando documentos do seller:', sellerId, data);
-      
+
       const response = await request({
         url: `/app/documents/${sellerId}/complete`,
         method: 'POST',
         data,
       });
-      
+
       console.log('✅ Resposta de completar documentos:', response);
-      
+
       addToast({
         type: 'success',
         text: 'Documentos do seller completados com sucesso!'
@@ -137,10 +166,10 @@ export function useSellerStatus() {
         duration: 4000,
         id: 'seller-documents-completed',
       });
-      
+
       // Recarregar o status após completar
       await checkSellerStatus();
-      
+
       return true;
     } catch (error: any) {
       console.error('❌ Erro ao completar documentos do seller:', error);
@@ -165,8 +194,10 @@ export function useSellerStatus() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [sellerId]);
 
-  // Mostrar cartão quando NÃO precisa de documentos (já tem CPF) e status ainda não é active
-  const needsCard = !!(sellerStatus && sellerStatus.needsDocuments === false && sellerStatus.status && sellerStatus.status !== 'active');
+  // Helpers
+  const isPending = !!(sellerStatus?.status) && /^pending/.test(sellerStatus.status);
+  // Mostrar cartão quando NÃO precisa de documentos (já tem CPF) e status pendente
+  const needsCard = !!(sellerStatus && sellerStatus.needsDocuments === false && isPending);
 
   return {
     sellerStatus,
@@ -174,8 +205,9 @@ export function useSellerStatus() {
     error,
     checkSellerStatus,
     completeSellerDocuments,
-  // Agora reflete apenas ausência de CPF (independente do app_status)
-  needsDocuments: !!(sellerStatus && sellerStatus.needsDocuments === true),
+    // Agora reflete apenas ausência de CPF (independente do app_status)
+    needsDocuments: !!(sellerStatus && sellerStatus.needsDocuments === true),
     needsCard,
+    isPending,
   };
 }
