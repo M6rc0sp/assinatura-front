@@ -8,7 +8,7 @@ export interface SellerStatus {
   status: string;
   message?: string;
   seller_id?: string | number | null;
-  has_asaas_integration?: boolean;
+  has_active_subscription?: boolean;
   store_name?: string | null;
   store_email?: string | null;
   subscription_status?: string | null;
@@ -64,9 +64,9 @@ export function useSellerStatus() {
       // Ajuste para novo formato da API - dados estão em content.data
       const data = content?.data;
 
-      if (data && (data.app_status !== undefined)) {
+      if (data && typeof data === 'object') {
         // Campos do contrato
-        const appStatus = data.app_status || '';
+        const appStatusFromAPI = (data as any).app_status;
         const cpfTop: string | null = (data as any)?.cpfCnpj ?? null;
         const cpfFromUserData: string | null = (data as any)?.userData?.cpfCnpj ?? null;
         const cpfFromNestedUser: string | null = (data as any)?.user?.userData?.cpfCnpj ?? null;
@@ -78,6 +78,17 @@ export function useSellerStatus() {
         const computedNeedsDocuments = needsDocumentsFromAPI ?? (!cpfFromData || String(cpfFromData).replace(/\D/g, '').length === 0);
 
         // Helper de pendência
+        const subscriptionStatus = (data as any)?.subscription_status as string | undefined;
+        // Determinar app_status com tolerância quando não vier do backend
+        let appStatus: string = typeof appStatusFromAPI === 'string' ? appStatusFromAPI : '';
+        if (!appStatus) {
+          const subStatusNorm = (subscriptionStatus || '').toString().toLowerCase();
+          if (subStatusNorm === 'active') {
+            appStatus = 'active';
+          } else {
+            appStatus = computedNeedsDocuments ? 'pending_documents' : 'pending';
+          }
+        }
         const isPending = !!appStatus && /^pending/.test(appStatus);
 
         // Montar estado interno consolidado
@@ -86,7 +97,7 @@ export function useSellerStatus() {
           message: (data as any).message || '',
           needsDocuments: computedNeedsDocuments,
           seller_id: (data as any).seller_id ?? null,
-          has_asaas_integration: !!(data as any).has_asaas_integration,
+          has_active_subscription: !!(data as any).has_active_subscription,
           store_name: (data as any).store_name ?? null,
           store_email: (data as any).store_email ?? null,
           subscription_status: (data as any).subscription_status ?? null,
@@ -118,11 +129,11 @@ export function useSellerStatus() {
           console.log('✅ Seller ativo e com CPF informado');
         }
       } else {
-        console.error('❌ Resposta de status inválida:', response);
+        console.error('❌ Resposta de status inválida (sem content.data):', response);
         setError('Formato de resposta inválido');
         addToast({
           type: 'danger',
-          text: 'Erro ao verificar status do seller: formato de resposta inválido',
+          text: 'Erro ao verificar status do seller: resposta sem dados',
           duration: 4000,
           id: 'error-seller-status-format',
         });
