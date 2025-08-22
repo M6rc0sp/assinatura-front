@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
-import { Box, Text, Spinner, Card } from '@nimbus-ds/components';
+import { Box, Text, Spinner, Card, Button } from '@nimbus-ds/components';
 // Importar o axios diretamente, não o do app que tem configuração do Nexo
 import axiosStandard from 'axios';
 
@@ -32,7 +32,7 @@ const Install: React.FC = () => {
           console.log('Instalação finalizada:', response);
           
           setStatus('success');
-          setMessage('Instalação concluída com sucesso! Redirecionando para o login...');
+          setMessage('Instalação concluída com sucesso! Redirecionando de volta pra loja...');
           
           // Redirecionar para a página de login da Nuvemshop após a instalação
           setTimeout(() => {
@@ -61,8 +61,9 @@ const Install: React.FC = () => {
       alignItems="center"
       padding="4"
       backgroundColor="neutral-surface"
+      style={{ width: '100%', maxWidth: '960px', margin: '0 auto' }}
     >
-      <Card style={{ maxWidth: '400px', width: '100%' }}>
+      <Card style={{ maxWidth: '560px', width: '100%' }}>
         <Card.Header title="Instalação do Aplicativo" />
         <Card.Body>
           <Box
@@ -84,6 +85,8 @@ const Install: React.FC = () => {
                     ? 'success-textHigh' 
                     : 'neutral-textHigh'
               }
+              aria-live="polite"
+              style={{ maxWidth: '36ch' }}
             >
               {message}
             </Text>
@@ -91,13 +94,13 @@ const Install: React.FC = () => {
         </Card.Body>
         {status === 'error' && (
           <Card.Footer>
-            <Text
-              onClick={() => window.location.href = 'http://nuvemshop.com.br/login'}
-              color="primary-interactive"
-              style={{ cursor: 'pointer', textDecoration: 'underline', textAlign: 'center', width: '100%' }}
+            <Button
+              appearance="primary"
+              onClick={() => (window.location.href = 'http://nuvemshop.com.br/login')}
+              style={{ width: '100%' }}
             >
               Ir para a página de login
-            </Text>
+            </Button>
           </Card.Footer>
         )}
       </Card>
