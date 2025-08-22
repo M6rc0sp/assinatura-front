@@ -25,8 +25,9 @@ const SellerStatusChecker: React.FC = () => {
   postalCode: '',
   });
 
-  // Mostrar o modal automaticamente quando o status não for 'active'
-  const needsAll = !isLoading && (sellerStatus?.status !== 'active');
+  // Mostrar o modal automaticamente apenas quando o status começar com 'pending'
+  const isPendingStatus = (s?: string) => !!s && /^pending/.test(s);
+  const needsAll = !isLoading && isPendingStatus(sellerStatus?.status);
   React.useEffect(() => {
     if (needsAll) {
       console.log('🔍 Seller não está ativo, pedindo todos os dados (cobrança + cartão).');
