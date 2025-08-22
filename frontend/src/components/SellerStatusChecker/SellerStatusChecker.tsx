@@ -4,17 +4,10 @@ import { useSellerStatus } from '@/hooks/useSellerStatus';
 import { useSellerSubscriptionCard } from '@/hooks';
 
 const SellerStatusChecker: React.FC = () => {
-  const { 
-    sellerStatus, 
-    isLoading, 
-    needsDocuments, 
-    needsCard,
-    completeSellerDocuments 
-  } = useSellerStatus();
+  const { sellerStatus, isLoading } = useSellerStatus();
   const { createSellerSubscription, isSubmitting } = useSellerSubscriptionCard();
   
   const [showModal, setShowModal] = useState<boolean>(false);
-  const [cpfCnpj, setCpfCnpj] = useState<string>('');
 
   // Campos de cartão
   const [card, setCard] = useState({
@@ -32,13 +25,14 @@ const SellerStatusChecker: React.FC = () => {
   postalCode: '',
   });
 
-  // Mostrar o modal automaticamente quando precisar de documentos ou cartão
+  // Mostrar o modal automaticamente quando o status não for 'active'
+  const needsAll = !isLoading && (sellerStatus?.status !== 'active');
   React.useEffect(() => {
-    if (!isLoading && (needsDocuments || needsCard)) {
-      console.log('🔍 Seller precisa completar informações/assinatura, mostrando modal', { needsDocuments, needsCard });
+    if (needsAll) {
+      console.log('🔍 Seller não está ativo, pedindo todos os dados (cobrança + cartão).');
       setShowModal(true);
     }
-  }, [needsDocuments, needsCard, isLoading]);
+  }, [needsAll]);
 
   // Prefill automático dos dados do seller quando disponível (sem pedir ID manual)
   React.useEffect(() => {
@@ -60,14 +54,7 @@ const SellerStatusChecker: React.FC = () => {
     }));
   }, [sellerStatus]);
 
-  const handleSubmitDocs = async () => {
-    const clean = (v: string) => (v || '').replace(/\D/g, '');
-    if (!clean(cpfCnpj)) return;
-
-    console.log('📝 Enviando CPF/CNPJ:', { cpfCnpj });
-    const success = await completeSellerDocuments({ cpfCnpj: clean(cpfCnpj) });
-    if (success) setCpfCnpj('');
-  };
+  // Tela única: não há mais envio separado de CPF
 
   const handleSubmitCard = async () => {
   const onlyDigits = (v: string) => (v || '').replace(/\D/g, '');
@@ -110,15 +97,15 @@ const SellerStatusChecker: React.FC = () => {
     }
   };
 
-  // Bloqueia fechar enquanto ainda precisa de docs ou cartão
-  const canDismiss = !(needsDocuments || needsCard);
+  // Bloqueia fechar enquanto status não for 'active'
+  const canDismiss = !needsAll;
 
   return (
     <>
       {showModal && (
         <Modal open={showModal} onDismiss={canDismiss ? () => setShowModal(false) : undefined}>
           <Modal.Header>
-            <Text fontWeight="bold">{needsDocuments ? 'Completar informações do Seller' : 'Finalizar assinatura do Seller'}</Text>
+            <Text fontWeight="bold">Finalizar assinatura do Seller</Text>
           </Modal.Header>
           <Modal.Body>
             <Box display="flex" flexDirection="column" gap="4">
@@ -128,22 +115,7 @@ const SellerStatusChecker: React.FC = () => {
                   <Text>{sellerStatus?.status || 'Unknown'}</Text>
                 </Box>
               </Box>
-
-              {needsDocuments && (
-                <Box display="flex" flexDirection="column" gap="2">
-                  <Text fontWeight="medium">Informe o CPF ou CNPJ:</Text>
-                  <Input
-                    placeholder="Digite o CPF ou CNPJ (somente números)"
-                    value={cpfCnpj}
-                    onChange={(e) => setCpfCnpj(e.target.value)}
-                  />
-                  <Button appearance="primary" onClick={handleSubmitDocs} disabled={!cpfCnpj}>
-                    Enviar documento
-                  </Button>
-                </Box>
-              )}
-
-              {needsCard && (
+              {needsAll && (
                 <Box display="flex" flexDirection="column" gap="2">
                   <Text fontWeight="medium">Dados de cobrança</Text>
                   <Input placeholder="Nome" value={billing.name} onChange={(e) => setBilling({ ...billing, name: e.target.value })} />
@@ -181,8 +153,7 @@ const SellerStatusChecker: React.FC = () => {
         <Box position="fixed" bottom="0" right="0" backgroundColor="neutral-surface" padding="2" borderRadius="1" margin="2">
           <Text fontWeight="bold" fontSize="caption">Debug - Seller Status:</Text>
           <Text fontSize="caption">Status: {sellerStatus?.status || 'Loading...'}</Text>
-          <Text fontSize="caption">Needs Docs: {needsDocuments ? 'Yes' : 'No'}</Text>
-          <Text fontSize="caption">Needs Card: {needsCard ? 'Yes' : 'No'}</Text>
+          <Text fontSize="caption">Needs All: {needsAll ? 'Yes' : 'No'}</Text>
           <Text fontSize="caption">Loading: {isLoading ? 'Yes' : 'No'}</Text>
         </Box>
       )}
