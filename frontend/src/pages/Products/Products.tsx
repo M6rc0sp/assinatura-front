@@ -26,6 +26,7 @@ const Products: React.FC = () => {
     price: '',
     description: '',
     subscription_price: '',
+    cycle: 'MONTHLY',
     sku: '',
     barcode: '',
     weight: '',
@@ -42,6 +43,7 @@ const Products: React.FC = () => {
       price: '',
       description: '',
       subscription_price: '',
+      cycle: 'MONTHLY',
       sku: '',
       barcode: '',
       weight: '',
@@ -83,7 +85,7 @@ const Products: React.FC = () => {
 
                 const handleSubmit = async (e: React.FormEvent) => {
                   e.preventDefault();
-                  
+
                   // Converter imagens para base64 se houver
                   let productImages = undefined;
                   if (form.images.length > 0) {
@@ -103,11 +105,12 @@ const Products: React.FC = () => {
                       return; // Para a execução se houve erro no processamento
                     }
                   }
-                  
+
                   await onCreateProduct({
                     name: form.name,
                     price: Number(form.price),
                     description: form.description,
+                    cycle: form.cycle as any,
                     subscription_price: form.subscription_price ? Number(form.subscription_price) : undefined,
                     sku: form.sku || undefined,
                     barcode: form.barcode || undefined,
@@ -170,7 +173,7 @@ const Products: React.FC = () => {
                                 required
                               />
                             </Box>
-                            
+
                             <Box>
                               <Text fontWeight="medium">Preço</Text>
                               <Input
@@ -184,7 +187,25 @@ const Products: React.FC = () => {
                                 required
                               />
                             </Box>
-                            
+
+                            <Box>
+                              <Text fontWeight="medium">Ciclo de cobrança</Text>
+                              <select
+                                name="cycle"
+                                value={form.cycle}
+                                onChange={handleFormChange}
+                                style={{ width: '100%', padding: 8, borderRadius: 4, border: '1px solid #ccc' }}
+                              >
+                                <option value="WEEKLY">Semanal</option>
+                                <option value="BIWEEKLY">Quinzenal</option>
+                                <option value="MONTHLY">Mensal</option>
+                                <option value="BIMONTHLY">Bimestral</option>
+                                <option value="QUARTERLY">Trimestral</option>
+                                <option value="SEMIANNUALLY">Semestral</option>
+                                <option value="YEARLY">Anual</option>
+                              </select>
+                            </Box>
+
                             <Box>
                               <Text fontWeight="medium">Preço de Assinatura</Text>
                               <Input
@@ -197,7 +218,7 @@ const Products: React.FC = () => {
                                 inputMode="decimal"
                               />
                             </Box>
-                            
+
                             <Box>
                               <Text fontWeight="medium">SKU</Text>
                               <Input
@@ -207,7 +228,7 @@ const Products: React.FC = () => {
                                 placeholder="SKU do produto"
                               />
                             </Box>
-                            
+
                             <Box>
                               <Text fontWeight="medium">Código de Barras</Text>
                               <Input
@@ -217,7 +238,7 @@ const Products: React.FC = () => {
                                 placeholder="Código de barras"
                               />
                             </Box>
-                            
+
                             <Box>
                               <Text fontWeight="medium">Peso (em gramas)</Text>
                               <Input
@@ -229,7 +250,7 @@ const Products: React.FC = () => {
                                 placeholder="Peso em gramas"
                               />
                             </Box>
-                            
+
                             <Box>
                               <Text fontWeight="medium">Estoque</Text>
                               <Input
@@ -241,7 +262,7 @@ const Products: React.FC = () => {
                                 placeholder="Quantidade em estoque"
                               />
                             </Box>
-                            
+
                             <Box>
                               <Text fontWeight="medium">Status</Text>
                               <select
@@ -255,7 +276,7 @@ const Products: React.FC = () => {
                                 <option value="draft">Rascunho</option>
                               </select>
                             </Box>
-                            
+
                             <Box>
                               <Text fontWeight="medium">Descrição</Text>
                               <textarea
@@ -266,7 +287,7 @@ const Products: React.FC = () => {
                                 style={{ width: '100%', padding: 8, borderRadius: 4, border: '1px solid #ccc', resize: 'vertical' }}
                               />
                             </Box>
-                            
+
                             <Box>
                               <Text fontWeight="medium">Imagens do Produto</Text>
                               <Box marginBottom="2">
@@ -279,10 +300,10 @@ const Products: React.FC = () => {
                                 accept=".gif,.jpg,.jpeg,.png,.webp"
                                 multiple
                                 onChange={handleImageChange}
-                                style={{ 
-                                  width: '100%', 
-                                  padding: 8, 
-                                  borderRadius: 4, 
+                                style={{
+                                  width: '100%',
+                                  padding: 8,
+                                  borderRadius: 4,
                                   border: '1px solid #ccc',
                                   marginBottom: 8
                                 }}
@@ -295,10 +316,10 @@ const Products: React.FC = () => {
                                     </Text>
                                   </Box>
                                   {form.images.map((file, index) => (
-                                    <Box 
-                                      key={index} 
-                                      display="flex" 
-                                      justifyContent="space-between" 
+                                    <Box
+                                      key={index}
+                                      display="flex"
+                                      justifyContent="space-between"
                                       alignItems="center"
                                       padding="2"
                                       backgroundColor="neutral-surface"

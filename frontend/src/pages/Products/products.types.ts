@@ -71,6 +71,7 @@ export interface IProduct {
     es?: string;
   };
   status?: string;             // Status: 'active', 'inactive', 'draft'
+  cycle?: 'WEEKLY' | 'BIWEEKLY' | 'MONTHLY' | 'BIMONTHLY' | 'QUARTERLY' | 'SEMIANNUALLY' | 'YEARLY'; // Ciclo de cobrança
   categories?: string;
   variants?: IVariant[];
   images?: IImage[] | null;    // URLs das imagens
@@ -83,10 +84,11 @@ export interface IProductsDataProvider {
     products: IProduct[];
     onDeleteProduct: (productId: number) => void;
     onSyncProduct: (productId: number) => void;
-    onCreateProduct: (data: { 
-      name: string | { pt?: string; es?: string }; 
-      price: number; 
+    onCreateProduct: (data: {
+      name: string | { pt?: string; es?: string };
+      price: number;
       description: string;
+      cycle?: 'WEEKLY' | 'BIWEEKLY' | 'MONTHLY' | 'BIMONTHLY' | 'QUARTERLY' | 'SEMIANNUALLY' | 'YEARLY';
       subscription_price?: number;
       sku?: string;
       barcode?: string;
@@ -95,10 +97,11 @@ export interface IProductsDataProvider {
       status?: string;
       images?: IProductImage[];  // Suporte a imagens no cadastro
     }) => Promise<void>;
-    onEditProduct: (productId: number, data: { 
-      name: string | { pt?: string; es?: string }; 
-      price: number; 
+    onEditProduct: (productId: number, data: {
+      name: string | { pt?: string; es?: string };
+      price: number;
       description: string;
+      cycle?: 'WEEKLY' | 'BIWEEKLY' | 'MONTHLY' | 'BIMONTHLY' | 'QUARTERLY' | 'SEMIANNUALLY' | 'YEARLY';
       subscription_price?: number;
       sku?: string;
       barcode?: string;

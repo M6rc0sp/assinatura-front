@@ -15,8 +15,8 @@ const ProductsDataProvider: React.FC<IProductsDataProvider> = ({
 
   // Função para verificar se a resposta é HTML
   const isHtmlResponse = (content: any): boolean => {
-    if (typeof content === 'string' && 
-       (content.trim().startsWith('<!DOCTYPE') || 
+    if (typeof content === 'string' &&
+      (content.trim().startsWith('<!DOCTYPE') ||
         content.trim().startsWith('<html'))) {
       return true;
     }
@@ -45,7 +45,7 @@ const ProductsDataProvider: React.FC<IProductsDataProvider> = ({
           // Calcular tamanho aproximado do base64 (75% do tamanho original)
           const sizeInBytes = (image.attachment.length * 3) / 4;
           const sizeInMB = sizeInBytes / (1024 * 1024);
-          
+
           if (sizeInMB > MAX_SIZE_MB) {
             return `Imagem muito grande (${sizeInMB.toFixed(1)}MB). Máximo permitido: ${MAX_SIZE_MB}MB`;
           }
@@ -65,7 +65,7 @@ const ProductsDataProvider: React.FC<IProductsDataProvider> = ({
 
   const onGetProducts = () => {
     if (!sellerId) return;
-    
+
     setIsLoading(true);
     request({
       url: `/app/seller/${sellerId}/products`, // Nova rota com seller_id (singular)
@@ -84,10 +84,10 @@ const ProductsDataProvider: React.FC<IProductsDataProvider> = ({
           });
           return;
         }
-        
+
         // Verificando o formato da resposta e extraindo o array de produtos
         console.log('API Response:', response);
-        
+
         // Caso a resposta esteja no formato { success: true, data: [...] }
         if (response.content && response.content.data && Array.isArray(response.content.data)) {
           setProduts(response.content.data);
@@ -186,10 +186,11 @@ const ProductsDataProvider: React.FC<IProductsDataProvider> = ({
     }
   };
 
-  const onCreateProduct = async (data: { 
-    name: string | { pt?: string; es?: string }; 
-    price: number; 
+  const onCreateProduct = async (data: {
+    name: string | { pt?: string; es?: string };
+    price: number;
     description: string;
+    cycle?: 'WEEKLY' | 'BIWEEKLY' | 'MONTHLY' | 'BIMONTHLY' | 'QUARTERLY' | 'SEMIANNUALLY' | 'YEARLY';
     subscription_price?: number;
     sku?: string;
     barcode?: string;
@@ -199,7 +200,7 @@ const ProductsDataProvider: React.FC<IProductsDataProvider> = ({
     images?: IProductImage[];
   }) => {
     if (!sellerId) return;
-    
+
     // Validar imagens antes de enviar
     if (data.images) {
       const imageValidationError = validateProductImages(data.images);
@@ -213,7 +214,7 @@ const ProductsDataProvider: React.FC<IProductsDataProvider> = ({
         return;
       }
     }
-    
+
     setIsLoading(true);
     try {
       await request({
@@ -241,9 +242,10 @@ const ProductsDataProvider: React.FC<IProductsDataProvider> = ({
   };
 
   const onEditProduct = async (productId: number, data: {
-    name: string | { pt?: string; es?: string }; 
-    price: number; 
+    name: string | { pt?: string; es?: string };
+    price: number;
     description: string;
+    cycle?: 'WEEKLY' | 'BIWEEKLY' | 'MONTHLY' | 'BIMONTHLY' | 'QUARTERLY' | 'SEMIANNUALLY' | 'YEARLY';
     subscription_price?: number;
     sku?: string;
     barcode?: string;
@@ -253,7 +255,7 @@ const ProductsDataProvider: React.FC<IProductsDataProvider> = ({
     images?: IProductImage[];
   }) => {
     if (!sellerId) return;
-    
+
     // Validar imagens antes de enviar
     if (data.images) {
       const imageValidationError = validateProductImages(data.images);
@@ -267,7 +269,7 @@ const ProductsDataProvider: React.FC<IProductsDataProvider> = ({
         return;
       }
     }
-    
+
     setIsLoading(true);
     try {
       await request({
