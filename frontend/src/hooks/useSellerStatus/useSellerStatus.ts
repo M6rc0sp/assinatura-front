@@ -114,19 +114,18 @@ export function useSellerStatus() {
         console.log('✅ Status do seller carregado:', appStatus);
         console.log('ℹ️ needsDocuments (API):', (data as any).needsDocuments, '→ (computado por CPF ausente):', computedNeedsDocuments, 'cpf detectado:', cpfFromData ? 'sim' : 'não');
 
-        // Alerta somente quando de fato faltar documento (CPF) ou status não estiver ativo
-        if (computedNeedsDocuments || isPending) {
+        // Alerta somente quando o status estiver pendente (não alertamos sobre CPF aqui
+        // porque o modal já solicita esses dados ao usuário)
+        if (isPending) {
           console.log('⚠️ Seller pendente:', { app_status: appStatus, computedNeedsDocuments });
           addToast({
             type: 'danger',
-            text: computedNeedsDocuments
-              ? 'É necessário informar CPF/CNPJ para continuar.'
-              : `Status do seller: ${appStatus}. Finalize a assinatura.`,
+            text: `Status do seller: ${appStatus}. Finalize a assinatura.`,
             duration: 8000,
             id: 'seller-status-warning',
           });
         } else {
-          console.log('✅ Seller ativo e com CPF informado');
+          console.log('✅ Seller ativo ou sem pendências relevantes');
         }
       } else {
         console.error('❌ Resposta de status inválida (sem content.data):', response);

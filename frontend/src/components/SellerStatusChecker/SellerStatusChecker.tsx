@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Box, Text, Modal, Button, Input } from '@nimbus-ds/components';
 import { useSellerStatus } from '@/hooks/useSellerStatus';
 import { useSellerSubscriptionCard } from '@/hooks';
@@ -17,6 +17,33 @@ const SellerStatusChecker: React.FC = () => {
     expiryYear: '',
     ccv: '',
   });
+  const [cardErrors, setCardErrors] = useState<{ number?: string; expiry?: string; ccv?: string; holderName?: string }>({});
+  // Helpers: apenas dígitos
+  const onlyDigits = (v: string) => (v || '').replace(/\D/g, '');
+
+  // Formatadores / máscaras
+  const formatCardNumber = (value: string) => {
+    const digits = onlyDigits(value).slice(0, 19);
+    return digits.replace(/(.{4})/g, '$1 ').trim();
+  };
+
+  // Util Luhn para validar número do cartão
+  const luhnCheck = (num: string) => {
+    if (!num) return false;
+    let sum = 0;
+    let shouldDouble = false;
+    for (let i = num.length - 1; i >= 0; i--) {
+      let digit = parseInt(num.charAt(i), 10);
+      if (shouldDouble) {
+        digit *= 2;
+        if (digit > 9) digit -= 9;
+      }
+      sum += digit;
+      shouldDouble = !shouldDouble;
+    }
+    return sum % 10 === 0;
+  };
+  const [isCardValid, setIsCardValid] = useState(false);
   const [billing, setBilling] = useState({
     name: '',
     email: '',
@@ -56,9 +83,37 @@ const SellerStatusChecker: React.FC = () => {
   }, [sellerStatus]);
 
   // Tela única: não há mais envio separado de CPF
+  // Validação reativa dos campos do cartão
+  useEffect(() => {
+    const errors: any = {};
+    const numberDigits = onlyDigits(card.number);
+    if (!numberDigits) errors.number = 'Número do cartão obrigatório';
+    else if (numberDigits.length < 12) errors.number = 'Número incompleto';
+    else if (!luhnCheck(numberDigits)) errors.number = 'Número inválido';
+
+    // Expiry
+    if (!/^[0-9]{2}$/.test(card.expiryMonth) || !/^[0-9]{4}$/.test(card.expiryYear)) {
+      errors.expiry = 'Validade inválida';
+    } else {
+      const mm = parseInt(card.expiryMonth, 10);
+      const yyyy = parseInt(card.expiryYear, 10);
+      if (isNaN(mm) || mm < 1 || mm > 12) errors.expiry = 'Mês inválido';
+      else {
+        const now = new Date();
+        const exp = new Date(yyyy, mm - 1, 1);
+        exp.setMonth(exp.getMonth() + 1);
+        if (exp <= now) errors.expiry = 'Cartão vencido';
+      }
+    }
+
+    if (!/^[0-9]{3,4}$/.test(card.ccv)) errors.ccv = 'CVV inválido';
+    if (!card.holderName || card.holderName.trim().length < 2) errors.holderName = 'Nome do titular inválido';
+
+    setCardErrors(errors);
+    setIsCardValid(Object.keys(errors).length === 0);
+  }, [card]);
 
   const handleSubmitCard = async () => {
-  const onlyDigits = (v: string) => (v || '').replace(/\D/g, '');
     // Montar payload conforme especificação
     const payload = {
       planData: {
@@ -128,14 +183,18 @@ const SellerStatusChecker: React.FC = () => {
 
                   <Text fontWeight="medium">Cartão</Text>
                   <Input placeholder="Titular" value={card.holderName} onChange={(e) => setCard({ ...card, holderName: e.target.value })} />
-                  <Input placeholder="Número" value={card.number} onChange={(e) => setCard({ ...card, number: e.target.value })} />
+                  {cardErrors.holderName && <Text color="danger-textHigh" fontSize="caption">{cardErrors.holderName}</Text>}
+                  <Input placeholder="Número" value={card.number} onChange={(e) => setCard({ ...card, number: formatCardNumber(e.target.value) })} />
+                  {cardErrors.number && <Text color="danger-textHigh" fontSize="caption">{cardErrors.number}</Text>}
                   <Box display="flex" gap="2">
                     <Input placeholder="MM" value={card.expiryMonth} onChange={(e) => setCard({ ...card, expiryMonth: e.target.value })} />
                     <Input placeholder="YYYY" value={card.expiryYear} onChange={(e) => setCard({ ...card, expiryYear: e.target.value })} />
                     <Input placeholder="CVV" value={card.ccv} onChange={(e) => setCard({ ...card, ccv: e.target.value })} />
                   </Box>
+                  {cardErrors.expiry && <Text color="danger-textHigh" fontSize="caption">{cardErrors.expiry}</Text>}
+                  {cardErrors.ccv && <Text color="danger-textHigh" fontSize="caption">{cardErrors.ccv}</Text>}
 
-                  <Button appearance="primary" onClick={handleSubmitCard} disabled={isSubmitting}>
+                  <Button appearance="primary" onClick={handleSubmitCard} disabled={isSubmitting || !isCardValid}>
                     {isSubmitting ? 'Enviando...' : 'Pagar e ativar assinatura'}
                   </Button>
                 </Box>
