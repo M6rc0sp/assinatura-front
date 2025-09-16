@@ -73,6 +73,8 @@ const SellerStatusChecker: React.FC = () => {
     cpfCnpj: '',
     phone: '',
     postalCode: '',
+    birthDate: '',
+    incomeValue: '',
   });
 
   // Formatadores adicionais
@@ -89,6 +91,41 @@ const SellerStatusChecker: React.FC = () => {
     const d = onlyDigits(value).slice(0, 8);
     if (d.length <= 5) return d;
     return `${d.slice(0, 5)}-${d.slice(5)}`;
+  };
+  
+  // Formatador para data de nascimento (DD/MM/AAAA)
+  const formatBirthDate = (value: string) => {
+    const digits = onlyDigits(value).slice(0, 8); // DDMMAAAA
+    if (digits.length <= 2) return digits; // Apenas dia
+    if (digits.length <= 4) return `${digits.slice(0, 2)}/${digits.slice(2)}`; // Dia e mês
+    return `${digits.slice(0, 2)}/${digits.slice(2, 4)}/${digits.slice(4)}`; // Data completa
+  };
+  
+  // Formatador para valores monetários
+  const formatCurrency = (value: string) => {
+    // Remove qualquer caractere que não seja dígito
+    const digits = onlyDigits(value);
+    
+    // Se não houver dígitos, retorna string vazia
+    if (digits.length === 0) return '';
+    
+    // Converte para número (inteiro em centavos)
+    const cents = parseInt(digits, 10);
+    
+    // Formata para reais (R$)
+    return (cents / 100).toLocaleString('pt-BR', { minimumFractionDigits: 2 });
+  };
+  
+  // Converte data de formato DD/MM/AAAA para AAAA-MM-DD (ISO)
+  const formatDateToISO = (dateStr: string) => {
+    if (!dateStr || !/^\d{2}\/\d{2}\/\d{4}$/.test(dateStr)) return undefined;
+    
+    const parts = dateStr.split('/');
+    const day = parts[0];
+    const month = parts[1];
+    const year = parts[2];
+    
+    return `${year}-${month}-${day}`;
   };
 
   // Mostrar o modal automaticamente apenas quando o status começar com 'pending'
@@ -112,14 +149,73 @@ const SellerStatusChecker: React.FC = () => {
       || data.userData?.cpfCnpj
       || data.user?.userData?.cpfCnpj
       || '').toString();
-
+    
+    // Obter data de nascimento caso exista
+    let birthDate = '';
+    if (data.userData?.birthDate) {
+      // Converter para formato DD/MM/AAAA se estiver em outro formato
+      const dateObj = new Date(data.userData.birthDate);
+      if (!isNaN(dateObj.getTime())) {
+        const day = String(dateObj.getDate()).padStart(2, '0');
+        const month = String(dateObj.getMonth() + 1).padStart(2, '0');
+        const year = dateObj.getFullYear();
+        birthDate = `${day}/${month}/${year}`;
+      }
+    }
+    
+    // Obter valor de renda caso exista
+    const incomeValue = data.userData?.income_value || data.incomeValue || '';
+    
     setBilling((prev) => ({
       ...prev,
       name: prev.name || storeName,
       email: prev.email || storeEmail,
       cpfCnpj: prev.cpfCnpj || cpf,
+      birthDate: prev.birthDate || birthDate,
+      incomeValue: prev.incomeValue || (incomeValue ? formatCurrency(incomeValue.toString()) : ''),
     }));
   }, [sellerStatus]);
+
+  // Validação dos dados de cobrança (incluindo novos campos)
+  const [billingErrors, setBillingErrors] = useState<{
+    cpfCnpj?: string;
+    birthDate?: string;
+    incomeValue?: string;
+  }>({});
+  
+  useEffect(() => {
+    const errors: {
+      cpfCnpj?: string;
+      birthDate?: string;
+      incomeValue?: string;
+    } = {};
+    
+    // Validar CPF/CNPJ
+    const cpfDigits = onlyDigits(billing.cpfCnpj);
+    if (cpfDigits && cpfDigits.length !== 11 && cpfDigits.length !== 14) {
+      errors.cpfCnpj = 'CPF/CNPJ inválido';
+    }
+    
+    // Validar data de nascimento (obrigatória para CPF)
+    if (cpfDigits && cpfDigits.length === 11) {
+      if (!billing.birthDate || !/^\d{2}\/\d{2}\/\d{4}$/.test(billing.birthDate)) {
+        errors.birthDate = 'Data de nascimento obrigatória para CPF';
+      }
+    }
+    
+    // Validar valor de renda (obrigatório)
+    if (!billing.incomeValue) {
+      errors.incomeValue = 'Renda mensal é obrigatória';
+    } else {
+      // Remover formatação e verificar se é um valor numérico positivo
+      const valueNumber = parseFloat(billing.incomeValue.replace(/\D/g, '')) / 100;
+      if (isNaN(valueNumber) || valueNumber <= 0) {
+        errors.incomeValue = 'Valor deve ser maior que zero';
+      }
+    }
+    
+    setBillingErrors(errors);
+  }, [billing]);
 
   // Tela única: não há mais envio separado de CPF
   // Validação reativa dos campos do cartão
@@ -204,6 +300,8 @@ const SellerStatusChecker: React.FC = () => {
           mobilePhone: billing.phone,
           addressNumber: '0',
           postalCode: onlyDigits(billing.postalCode) || undefined,
+          birthDate: billing.birthDate ? formatDateToISO(billing.birthDate) : undefined, // Converte DD/MM/AAAA para ISO (AAAA-MM-DD)
+          incomeValue: billing.incomeValue ? parseFloat(billing.incomeValue.replace(/\D/g, '')) / 100 : undefined, // Converte string R$ para número
         },
       },
     };
@@ -243,6 +341,7 @@ const SellerStatusChecker: React.FC = () => {
                     value={billing.cpfCnpj}
                     onChange={(e) => setBilling({ ...billing, cpfCnpj: formatCpfCnpj(e.target.value) })}
                   />
+                  {billingErrors.cpfCnpj && <Text color="danger-textHigh" fontSize="caption">{billingErrors.cpfCnpj}</Text>}
                   <Input
                     placeholder="Telefone"
                     value={billing.phone}
@@ -253,6 +352,18 @@ const SellerStatusChecker: React.FC = () => {
                     value={billing.postalCode}
                     onChange={(e) => setBilling({ ...billing, postalCode: formatPostalCode(e.target.value) })}
                   />
+                  <Input
+                    placeholder="Data de Nascimento (DD/MM/AAAA) - Obrigatório para CPF"
+                    value={billing.birthDate || ''}
+                    onChange={(e) => setBilling({ ...billing, birthDate: formatBirthDate(e.target.value) })}
+                  />
+                  {billingErrors.birthDate && <Text color="danger-textHigh" fontSize="caption">{billingErrors.birthDate}</Text>}
+                  <Input
+                    placeholder="Renda Mensal (R$) - Obrigatório"
+                    value={billing.incomeValue || ''}
+                    onChange={(e) => setBilling({ ...billing, incomeValue: formatCurrency(e.target.value) })}
+                  />
+                  {billingErrors.incomeValue && <Text color="danger-textHigh" fontSize="caption">{billingErrors.incomeValue}</Text>}
                   {/* IP remoto não deve ser coletado no front. O backend deve inferir do request. */}
 
                   <Text fontWeight="medium">Cartão</Text>
@@ -282,7 +393,11 @@ const SellerStatusChecker: React.FC = () => {
                   {cardErrors.expiry && <Text color="danger-textHigh" fontSize="caption">{cardErrors.expiry}</Text>}
                   {cardErrors.ccv && <Text color="danger-textHigh" fontSize="caption">{cardErrors.ccv}</Text>}
 
-                  <Button appearance="primary" onClick={handleSubmitCard} disabled={isSubmitting || !isCardValid}>
+                  <Button 
+                    appearance="primary" 
+                    onClick={handleSubmitCard} 
+                    disabled={isSubmitting || !isCardValid || Object.keys(billingErrors).length > 0}
+                  >
                     {isSubmitting ? 'Enviando...' : 'Pagar e ativar assinatura'}
                   </Button>
                 </Box>
