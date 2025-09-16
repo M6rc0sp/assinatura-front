@@ -92,7 +92,7 @@ const SellerStatusChecker: React.FC = () => {
     if (d.length <= 5) return d;
     return `${d.slice(0, 5)}-${d.slice(5)}`;
   };
-  
+
   // Formatador para data de nascimento (DD/MM/AAAA)
   const formatBirthDate = (value: string) => {
     const digits = onlyDigits(value).slice(0, 8); // DDMMAAAA
@@ -100,31 +100,31 @@ const SellerStatusChecker: React.FC = () => {
     if (digits.length <= 4) return `${digits.slice(0, 2)}/${digits.slice(2)}`; // Dia e mês
     return `${digits.slice(0, 2)}/${digits.slice(2, 4)}/${digits.slice(4)}`; // Data completa
   };
-  
+
   // Formatador para valores monetários
   const formatCurrency = (value: string) => {
     // Remove qualquer caractere que não seja dígito
     const digits = onlyDigits(value);
-    
+
     // Se não houver dígitos, retorna string vazia
     if (digits.length === 0) return '';
-    
+
     // Converte para número (inteiro em centavos)
     const cents = parseInt(digits, 10);
-    
+
     // Formata para reais (R$)
     return (cents / 100).toLocaleString('pt-BR', { minimumFractionDigits: 2 });
   };
-  
+
   // Converte data de formato DD/MM/AAAA para AAAA-MM-DD (ISO)
   const formatDateToISO = (dateStr: string) => {
     if (!dateStr || !/^\d{2}\/\d{2}\/\d{4}$/.test(dateStr)) return undefined;
-    
+
     const parts = dateStr.split('/');
     const day = parts[0];
     const month = parts[1];
     const year = parts[2];
-    
+
     return `${year}-${month}-${day}`;
   };
 
@@ -149,7 +149,7 @@ const SellerStatusChecker: React.FC = () => {
       || data.userData?.cpfCnpj
       || data.user?.userData?.cpfCnpj
       || '').toString();
-    
+
     // Obter data de nascimento caso exista
     let birthDate = '';
     if (data.userData?.birthDate) {
@@ -162,10 +162,10 @@ const SellerStatusChecker: React.FC = () => {
         birthDate = `${day}/${month}/${year}`;
       }
     }
-    
+
     // Obter valor de renda caso exista
     const incomeValue = data.userData?.income_value || data.incomeValue || '';
-    
+
     setBilling((prev) => ({
       ...prev,
       name: prev.name || storeName,
@@ -182,27 +182,27 @@ const SellerStatusChecker: React.FC = () => {
     birthDate?: string;
     incomeValue?: string;
   }>({});
-  
+
   useEffect(() => {
     const errors: {
       cpfCnpj?: string;
       birthDate?: string;
       incomeValue?: string;
     } = {};
-    
+
     // Validar CPF/CNPJ
     const cpfDigits = onlyDigits(billing.cpfCnpj);
     if (cpfDigits && cpfDigits.length !== 11 && cpfDigits.length !== 14) {
       errors.cpfCnpj = 'CPF/CNPJ inválido';
     }
-    
+
     // Validar data de nascimento (obrigatória para CPF)
     if (cpfDigits && cpfDigits.length === 11) {
       if (!billing.birthDate || !/^\d{2}\/\d{2}\/\d{4}$/.test(billing.birthDate)) {
         errors.birthDate = 'Data de nascimento obrigatória para CPF';
       }
     }
-    
+
     // Validar valor de renda (obrigatório)
     if (!billing.incomeValue) {
       errors.incomeValue = 'Renda mensal é obrigatória';
@@ -213,7 +213,7 @@ const SellerStatusChecker: React.FC = () => {
         errors.incomeValue = 'Valor deve ser maior que zero';
       }
     }
-    
+
     setBillingErrors(errors);
   }, [billing]);
 
@@ -393,9 +393,9 @@ const SellerStatusChecker: React.FC = () => {
                   {cardErrors.expiry && <Text color="danger-textHigh" fontSize="caption">{cardErrors.expiry}</Text>}
                   {cardErrors.ccv && <Text color="danger-textHigh" fontSize="caption">{cardErrors.ccv}</Text>}
 
-                  <Button 
-                    appearance="primary" 
-                    onClick={handleSubmitCard} 
+                  <Button
+                    appearance="primary"
+                    onClick={handleSubmitCard}
                     disabled={isSubmitting || !isCardValid || Object.keys(billingErrors).length > 0}
                   >
                     {isSubmitting ? 'Enviando...' : 'Pagar e ativar assinatura'}

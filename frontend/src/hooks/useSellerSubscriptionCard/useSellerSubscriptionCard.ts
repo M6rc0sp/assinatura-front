@@ -57,7 +57,7 @@ export function useSellerSubscriptionCard() {
 
   const onlyDigits = (v: string) => (v || '').replace(/\D/g, '');
 
-    const validatePayload = (payload: CreateSellerSubscriptionPayload): string | null => {
+  const validatePayload = (payload: CreateSellerSubscriptionPayload): string | null => {
     const { planData, billingInfo } = payload;
     if (!planData?.plan_name || !planData?.cycle) return 'planData.plan_name e planData.cycle são obrigatórios';
     if (typeof planData.value !== 'number' || planData.value <= 0) return 'planData.value deve ser > 0';
@@ -68,21 +68,21 @@ export function useSellerSubscriptionCard() {
 
     const cpf = onlyDigits(billingInfo.cpfCnpj);
     if (!(cpf.length === 11 || cpf.length === 14)) return 'cpfCnpj deve ter 11 (CPF) ou 14 (CNPJ) dígitos';
-    
+
     // Para pessoa física (CPF), validar data de nascimento
     if (cpf.length === 11 && !billingInfo.creditCardHolderInfo?.birthDate) {
       return 'Data de nascimento é obrigatória para CPF';
     }
-    
+
     // Validar valor da renda (obrigatório para subconta Asaas)
-    if (!billingInfo.creditCardHolderInfo?.incomeValue || 
-        typeof billingInfo.creditCardHolderInfo.incomeValue !== 'number' || 
-        billingInfo.creditCardHolderInfo.incomeValue <= 0) {
+    if (!billingInfo.creditCardHolderInfo?.incomeValue ||
+      typeof billingInfo.creditCardHolderInfo.incomeValue !== 'number' ||
+      billingInfo.creditCardHolderInfo.incomeValue <= 0) {
       return 'Valor da renda mensal deve ser maior que zero';
     }
 
     const phone = onlyDigits(billingInfo.phone);
-    if (phone.length < 8) return 'billingInfo.phone inválido';    if ('creditCard' in billingInfo && billingInfo.creditCard) {
+    if (phone.length < 8) return 'billingInfo.phone inválido'; if ('creditCard' in billingInfo && billingInfo.creditCard) {
       const { number, expiryMonth, expiryYear, ccv } = billingInfo.creditCard;
       if (!onlyDigits(number)) return 'Número do cartão inválido';
       if (!/^\d{2}$/.test(expiryMonth)) return 'expiryMonth deve ser MM';
