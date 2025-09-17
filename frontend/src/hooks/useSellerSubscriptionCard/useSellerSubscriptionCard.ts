@@ -26,6 +26,8 @@ export interface CreditCardHolderInfo {
   mobilePhone?: string;
   addressNumber?: string;
   postalCode?: string;
+  birthDate?: string;
+  incomeValue?: number;
 }
 
 export interface BillingInfoBase {
@@ -67,10 +69,20 @@ export function useSellerSubscriptionCard() {
     const cpf = onlyDigits(billingInfo.cpfCnpj);
     if (!(cpf.length === 11 || cpf.length === 14)) return 'cpfCnpj deve ter 11 (CPF) ou 14 (CNPJ) dígitos';
 
-    const phone = onlyDigits(billingInfo.phone);
-    if (phone.length < 8) return 'billingInfo.phone inválido';
+    // Para pessoa física (CPF), validar data de nascimento
+    if (cpf.length === 11 && !billingInfo.creditCardHolderInfo?.birthDate) {
+      return 'Data de nascimento é obrigatória para CPF';
+    }
 
-    if ('creditCard' in billingInfo && billingInfo.creditCard) {
+    // Validar valor da renda (obrigatório para subconta Asaas)
+    if (!billingInfo.creditCardHolderInfo?.incomeValue ||
+      typeof billingInfo.creditCardHolderInfo.incomeValue !== 'number' ||
+      billingInfo.creditCardHolderInfo.incomeValue <= 0) {
+      return 'Valor da renda mensal deve ser maior que zero';
+    }
+
+    const phone = onlyDigits(billingInfo.phone);
+    if (phone.length < 8) return 'billingInfo.phone inválido'; if ('creditCard' in billingInfo && billingInfo.creditCard) {
       const { number, expiryMonth, expiryYear, ccv } = billingInfo.creditCard;
       if (!onlyDigits(number)) return 'Número do cartão inválido';
       if (!/^\d{2}$/.test(expiryMonth)) return 'expiryMonth deve ser MM';
