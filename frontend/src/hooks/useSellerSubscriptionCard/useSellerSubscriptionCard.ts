@@ -26,6 +26,7 @@ export interface CreditCardHolderInfo {
   mobilePhone?: string;
   addressNumber?: string;
   postalCode?: string;
+  city?: string;
   birthDate?: string;
   incomeValue?: number;
 }
