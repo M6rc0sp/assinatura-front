@@ -73,6 +73,7 @@ const SellerStatusChecker: React.FC = () => {
     cpfCnpj: '',
     phone: '',
     postalCode: '',
+    city: '',
     birthDate: '',
     incomeValue: '',
   });
@@ -179,6 +180,7 @@ const SellerStatusChecker: React.FC = () => {
   // Validação dos dados de cobrança (incluindo novos campos)
   const [billingErrors, setBillingErrors] = useState<{
     cpfCnpj?: string;
+    city?: string;
     birthDate?: string;
     incomeValue?: string;
   }>({});
@@ -186,6 +188,7 @@ const SellerStatusChecker: React.FC = () => {
   useEffect(() => {
     const errors: {
       cpfCnpj?: string;
+      city?: string;
       birthDate?: string;
       incomeValue?: string;
     } = {};
@@ -194,6 +197,11 @@ const SellerStatusChecker: React.FC = () => {
     const cpfDigits = onlyDigits(billing.cpfCnpj);
     if (cpfDigits && cpfDigits.length !== 11 && cpfDigits.length !== 14) {
       errors.cpfCnpj = 'CPF/CNPJ inválido';
+    }
+
+    // Validar cidade (obrigatória)
+    if (!billing.city || billing.city.trim().length < 2) {
+      errors.city = 'Cidade é obrigatória';
     }
 
     // Validar data de nascimento (obrigatória para CPF)
@@ -300,6 +308,7 @@ const SellerStatusChecker: React.FC = () => {
           mobilePhone: billing.phone,
           addressNumber: '0',
           postalCode: onlyDigits(billing.postalCode) || undefined,
+          city: billing.city || undefined,
           birthDate: billing.birthDate ? formatDateToISO(billing.birthDate) : undefined, // Converte DD/MM/AAAA para ISO (AAAA-MM-DD)
           incomeValue: billing.incomeValue ? parseFloat(billing.incomeValue.replace(/\D/g, '')) / 100 : undefined, // Converte string R$ para número
         },
@@ -352,6 +361,12 @@ const SellerStatusChecker: React.FC = () => {
                     value={billing.postalCode}
                     onChange={(e) => setBilling({ ...billing, postalCode: formatPostalCode(e.target.value) })}
                   />
+                  <Input
+                    placeholder="Cidade"
+                    value={billing.city}
+                    onChange={(e) => setBilling({ ...billing, city: e.target.value })}
+                  />
+                  {billingErrors.city && <Text color="danger-textHigh" fontSize="caption">{billingErrors.city}</Text>}
                   <Input
                     placeholder="Data de Nascimento (DD/MM/AAAA) - Obrigatório para CPF"
                     value={billing.birthDate || ''}
