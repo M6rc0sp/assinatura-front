@@ -191,8 +191,8 @@ const SellerStatusChecker: React.FC = () => {
     incomeValue?: string;
   }>({});
 
-  // Estado para armazenar mensagem de erro geral do form
-  const [formErrorMessage, setFormErrorMessage] = useState<string>('');
+  // Estado para armazenar erro da API
+  const [apiError, setApiError] = useState<string>('');
 
   useEffect(() => {
     const errors: {
@@ -251,14 +251,6 @@ const SellerStatusChecker: React.FC = () => {
     }
 
     setBillingErrors(errors);
-
-    // Atualiza mensagem de erro geral se houver erros
-    const errorMessages = Object.values(errors).filter(e => e);
-    if (errorMessages.length > 0) {
-      setFormErrorMessage(`Preencha todos os campos obrigatórios: ${errorMessages.join(', ')}`);
-    } else {
-      setFormErrorMessage('');
-    }
   }, [billing]);
 
   // Tela única: não há mais envio separado de CPF
@@ -306,6 +298,9 @@ const SellerStatusChecker: React.FC = () => {
   }, [card, cardTouched]);
 
   const handleSubmitCard = async () => {
+    // Limpar erro anterior
+    setApiError('');
+
     // Montar payload conforme especificação
     const payload = {
       planData: {
@@ -357,6 +352,9 @@ const SellerStatusChecker: React.FC = () => {
     if (res.success) {
       // Fecha modal apenas quando assinatura concluída com sucesso
       setShowModal(false);
+    } else {
+      // Mostra erro da API no banner
+      setApiError(res.error?.message || 'Erro ao criar assinatura. Tente novamente.');
     }
   };
 
@@ -372,7 +370,7 @@ const SellerStatusChecker: React.FC = () => {
           </Modal.Header>
           <Modal.Body style={{ maxHeight: '70vh', overflowY: 'auto' }}>
             <Box display="flex" flexDirection="column" gap="4">
-              {formErrorMessage && (
+              {apiError && (
                 <Box
                   padding="3"
                   backgroundColor="danger-surface"
@@ -380,7 +378,7 @@ const SellerStatusChecker: React.FC = () => {
                   style={{ borderLeft: '4px solid #d32f2f', paddingLeft: 16 }}
                 >
                   <Text color="danger-textHigh" fontWeight="medium">
-                    ⚠️ {formErrorMessage}
+                    ⚠️ Erro: {apiError}
                   </Text>
                 </Box>
               )}
