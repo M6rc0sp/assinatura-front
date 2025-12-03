@@ -72,8 +72,11 @@ const SellerStatusChecker: React.FC = () => {
     email: '',
     cpfCnpj: '',
     phone: '',
+    address: '',
+    addressNumber: '',
+    complement: '',
+    province: '',
     postalCode: '',
-    city: '',
     birthDate: '',
     incomeValue: '',
   });
@@ -180,7 +183,10 @@ const SellerStatusChecker: React.FC = () => {
   // Validação dos dados de cobrança (incluindo novos campos)
   const [billingErrors, setBillingErrors] = useState<{
     cpfCnpj?: string;
-    city?: string;
+    address?: string;
+    addressNumber?: string;
+    province?: string;
+    postalCode?: string;
     birthDate?: string;
     incomeValue?: string;
   }>({});
@@ -188,7 +194,10 @@ const SellerStatusChecker: React.FC = () => {
   useEffect(() => {
     const errors: {
       cpfCnpj?: string;
-      city?: string;
+      address?: string;
+      addressNumber?: string;
+      province?: string;
+      postalCode?: string;
       birthDate?: string;
       incomeValue?: string;
     } = {};
@@ -199,9 +208,25 @@ const SellerStatusChecker: React.FC = () => {
       errors.cpfCnpj = 'CPF/CNPJ inválido';
     }
 
-    // Validar cidade (obrigatória)
-    if (!billing.city || billing.city.trim().length < 2) {
-      errors.city = 'Cidade é obrigatória';
+    // Validar endereço (obrigatório)
+    if (!billing.address || billing.address.trim().length < 2) {
+      errors.address = 'Endereço é obrigatório';
+    }
+
+    // Validar número (obrigatório)
+    if (!billing.addressNumber || billing.addressNumber.trim().length === 0) {
+      errors.addressNumber = 'Número é obrigatório';
+    }
+
+    // Validar bairro (obrigatório)
+    if (!billing.province || billing.province.trim().length < 2) {
+      errors.province = 'Bairro é obrigatório';
+    }
+
+    // Validar CEP (obrigatório)
+    const cepDigits = onlyDigits(billing.postalCode);
+    if (!cepDigits || cepDigits.length !== 8) {
+      errors.postalCode = 'CEP inválido (deve ter 8 dígitos)';
     }
 
     // Validar data de nascimento (obrigatória para CPF)
@@ -306,9 +331,11 @@ const SellerStatusChecker: React.FC = () => {
           email: billing.email,
           cpfCnpj: onlyDigits(billing.cpfCnpj),
           mobilePhone: billing.phone,
-          addressNumber: '0',
+          address: billing.address || undefined,
+          addressNumber: billing.addressNumber || undefined,
+          complement: billing.complement || undefined,
+          province: billing.province || undefined,
           postalCode: onlyDigits(billing.postalCode) || undefined,
-          city: billing.city || undefined,
           birthDate: billing.birthDate ? formatDateToISO(billing.birthDate) : undefined, // Converte DD/MM/AAAA para ISO (AAAA-MM-DD)
           incomeValue: billing.incomeValue ? parseFloat(billing.incomeValue.replace(/\D/g, '')) / 100 : undefined, // Converte string R$ para número
         },
@@ -362,11 +389,32 @@ const SellerStatusChecker: React.FC = () => {
                     onChange={(e) => setBilling({ ...billing, postalCode: formatPostalCode(e.target.value) })}
                   />
                   <Input
-                    placeholder="Cidade"
-                    value={billing.city}
-                    onChange={(e) => setBilling({ ...billing, city: e.target.value })}
+                    placeholder="Endereço"
+                    value={billing.address}
+                    onChange={(e) => setBilling({ ...billing, address: e.target.value })}
                   />
-                  {billingErrors.city && <Text color="danger-textHigh" fontSize="caption">{billingErrors.city}</Text>}
+                  {billingErrors.address && <Text color="danger-textHigh" fontSize="caption">{billingErrors.address}</Text>}
+                  <Box display="flex" gap="2">
+                    <Input
+                      placeholder="Número"
+                      value={billing.addressNumber}
+                      onChange={(e) => setBilling({ ...billing, addressNumber: e.target.value })}
+                      style={{ flex: 1 }}
+                    />
+                    <Input
+                      placeholder="Complemento"
+                      value={billing.complement}
+                      onChange={(e) => setBilling({ ...billing, complement: e.target.value })}
+                      style={{ flex: 1 }}
+                    />
+                  </Box>
+                  {billingErrors.addressNumber && <Text color="danger-textHigh" fontSize="caption">{billingErrors.addressNumber}</Text>}
+                  <Input
+                    placeholder="Bairro"
+                    value={billing.province}
+                    onChange={(e) => setBilling({ ...billing, province: e.target.value })}
+                  />
+                  {billingErrors.province && <Text color="danger-textHigh" fontSize="caption">{billingErrors.province}</Text>}
                   <Input
                     placeholder="Data de Nascimento (DD/MM/AAAA) - Obrigatório para CPF"
                     value={billing.birthDate || ''}

@@ -24,9 +24,11 @@ export interface CreditCardHolderInfo {
   email?: string;
   cpfCnpj?: string;
   mobilePhone?: string;
+  address?: string;
   addressNumber?: string;
+  complement?: string;
+  province?: string;
   postalCode?: string;
-  city?: string;
   birthDate?: string;
   incomeValue?: number;
 }
