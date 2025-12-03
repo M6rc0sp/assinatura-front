@@ -332,7 +332,7 @@ const SellerStatusChecker: React.FC = () => {
           <Modal.Header>
             <Text fontWeight="bold">Finalizar assinatura do Seller</Text>
           </Modal.Header>
-          <Modal.Body>
+          <Modal.Body style={{ maxHeight: '70vh', overflowY: 'auto' }}>
             <Box display="flex" flexDirection="column" gap="4">
               <Box>
                 <Text fontWeight="medium">Status atual:</Text>
