@@ -191,6 +191,9 @@ const SellerStatusChecker: React.FC = () => {
     incomeValue?: string;
   }>({});
 
+  // Estado para armazenar mensagem de erro geral do form
+  const [formErrorMessage, setFormErrorMessage] = useState<string>('');
+
   useEffect(() => {
     const errors: {
       cpfCnpj?: string;
@@ -248,6 +251,14 @@ const SellerStatusChecker: React.FC = () => {
     }
 
     setBillingErrors(errors);
+
+    // Atualiza mensagem de erro geral se houver erros
+    const errorMessages = Object.values(errors).filter(e => e);
+    if (errorMessages.length > 0) {
+      setFormErrorMessage(`Preencha todos os campos obrigatórios: ${errorMessages.join(', ')}`);
+    } else {
+      setFormErrorMessage('');
+    }
   }, [billing]);
 
   // Tela única: não há mais envio separado de CPF
@@ -361,6 +372,18 @@ const SellerStatusChecker: React.FC = () => {
           </Modal.Header>
           <Modal.Body style={{ maxHeight: '70vh', overflowY: 'auto' }}>
             <Box display="flex" flexDirection="column" gap="4">
+              {formErrorMessage && (
+                <Box
+                  padding="3"
+                  backgroundColor="danger-surface"
+                  borderRadius="1"
+                  style={{ borderLeft: '4px solid #d32f2f', paddingLeft: 16 }}
+                >
+                  <Text color="danger-textHigh" fontWeight="medium">
+                    ⚠️ {formErrorMessage}
+                  </Text>
+                </Box>
+              )}
               <Box>
                 <Text fontWeight="medium">Status atual:</Text>
                 <Box padding="2" backgroundColor="neutral-surface" borderRadius="1">
