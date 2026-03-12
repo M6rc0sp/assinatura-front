@@ -54,57 +54,67 @@ const Install: React.FC = () => {
   }, [location, navigate]);
 
   return (
-    <Box
-      height="100vh"
-      display="flex"
-      justifyContent="center"
-      alignItems="center"
-      padding="4"
-      backgroundColor="neutral-surface"
-      style={{ width: 'min(100%, 800px)', margin: '0 auto' }}
-    >
-      <Card style={{ maxWidth: '800px', width: '100%' }}>
-        <Card.Header title="Instalação do Aplicativo" />
-        <Card.Body>
-          <Box
-            display="flex"
-            flexDirection="column"
-            alignItems="center"
-            gap="4"
-            padding="4"
-          >
-            {status === 'loading' && <Spinner size="medium" />}
+    <div style={{
+      display: 'flex',
+      justifyContent: 'center',
+      alignItems: 'center',
+      minHeight: '100vh',
+      padding: '1rem',
+      backgroundColor: '#f0f0f0',
+      width: '100%'
+    }}>
+      <div style={{ width: '100%', maxWidth: '800px' }}>
+        <Box
+          display="flex"
+          flexDirection="column"
+          justifyContent="center"
+          alignItems="stretch"
+          backgroundColor="neutral-surface"
+        >
+          <Card style={{ width: '100%' }}>
+            <Card.Header title="Instalação do Aplicativo" />
+            <Card.Body>
+              <Box
+                display="flex"
+                flexDirection="column"
+                alignItems="center"
+                gap="4"
+                padding="4"
+              >
+                {status === 'loading' && <Spinner size="medium" />}
 
-            <Text
-              textAlign="center"
-              fontWeight={status === 'error' ? 'bold' : 'regular'}
-              color={
-                status === 'error'
-                  ? 'danger-textHigh'
-                  : status === 'success'
-                    ? 'success-textHigh'
-                    : 'neutral-textHigh'
-              }
-              aria-live="polite"
-              style={{ maxWidth: '36ch' }}
-            >
-              {message}
-            </Text>
-          </Box>
-        </Card.Body>
-        {status === 'error' && (
-          <Card.Footer>
-            <Button
-              appearance="primary"
-              onClick={() => (window.location.href = 'http://nuvemshop.com.br/login')}
-              style={{ width: '100%' }}
-            >
-              Ir para a página de login
-            </Button>
-          </Card.Footer>
-        )}
-      </Card>
-    </Box>
+                <Text
+                  textAlign="center"
+                  fontWeight={status === 'error' ? 'bold' : 'regular'}
+                  color={
+                    status === 'error'
+                      ? 'danger-textHigh'
+                      : status === 'success'
+                        ? 'success-textHigh'
+                        : 'neutral-textHigh'
+                  }
+                  aria-live="polite"
+                  style={{ maxWidth: '36ch' }}
+                >
+                  {message}
+                </Text>
+              </Box>
+            </Card.Body>
+            {status === 'error' && (
+              <Card.Footer>
+                <Button
+                  appearance="primary"
+                  onClick={() => (window.location.href = 'http://nuvemshop.com.br/login')}
+                  style={{ width: '100%' }}
+                >
+                  Ir para a página de login
+                </Button>
+              </Card.Footer>
+            )}
+          </Card>
+        </Box>
+      </div>
+    </div>
   );
 };
 
