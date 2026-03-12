@@ -9,19 +9,19 @@ const Install: React.FC = () => {
   const [message, setMessage] = useState<string>('Processando instalação...');
   const location = useLocation();
   const navigate = useNavigate();
-  
+
   useEffect(() => {
     const handleInstall = async () => {
       try {
         // Extrair o código da query string
         const searchParams = new URLSearchParams(location.search);
         const code = searchParams.get('code');
-        
+
         if (code) {
           console.log('Iniciando instalação com código:', code);
           setStatus('loading');
           setMessage('Conectando ao servidor de instalação...');
-          
+
           // Fazer a chamada para o endpoint da API diretamente sem o Nexo
           const response = await axiosStandard.get(`https://assinaturas.appns.com.br/api/ns/install?code=${code}`, {
             headers: {
@@ -30,10 +30,10 @@ const Install: React.FC = () => {
             }
           });
           console.log('Instalação finalizada:', response);
-          
+
           setStatus('success');
           setMessage('Instalação concluída com sucesso! Redirecionando de volta pra loja...');
-          
+
           // Redirecionar para a página de login da Nuvemshop após a instalação
           setTimeout(() => {
             window.location.href = 'http://nuvemshop.com.br/login';
@@ -49,10 +49,10 @@ const Install: React.FC = () => {
         setMessage(`Erro durante instalação: ${error.message || 'Falha na conexão'}`);
       }
     };
-    
+
     handleInstall();
   }, [location, navigate]);
-  
+
   return (
     <Box
       height="100vh"
@@ -61,9 +61,9 @@ const Install: React.FC = () => {
       alignItems="center"
       padding="4"
       backgroundColor="neutral-surface"
-      style={{ width: '100%', maxWidth: '960px', margin: '0 auto' }}
+      style={{ width: 'min(100%, 800px)', margin: '0 auto' }}
     >
-      <Card style={{ maxWidth: '560px', width: '100%' }}>
+      <Card style={{ maxWidth: '800px', width: '100%' }}>
         <Card.Header title="Instalação do Aplicativo" />
         <Card.Body>
           <Box
@@ -74,15 +74,15 @@ const Install: React.FC = () => {
             padding="4"
           >
             {status === 'loading' && <Spinner size="medium" />}
-            
+
             <Text
               textAlign="center"
               fontWeight={status === 'error' ? 'bold' : 'regular'}
               color={
-                status === 'error' 
-                  ? 'danger-textHigh' 
-                  : status === 'success' 
-                    ? 'success-textHigh' 
+                status === 'error'
+                  ? 'danger-textHigh'
+                  : status === 'success'
+                    ? 'success-textHigh'
                     : 'neutral-textHigh'
               }
               aria-live="polite"
