@@ -11,7 +11,7 @@ const __dirname = dirname(__filename);
 
 // https://vitejs.dev/config/
 export default defineConfig({
-  base: '/ns/',
+  base: '/',
   optimizeDeps: {
     include: [
       '@nimbus-ds/patterns',
