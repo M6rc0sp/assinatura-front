@@ -138,81 +138,67 @@ const SellerStatusChecker: React.FC = () => {
     };
 
     // Converte data de formato DD/MM/AAAA para AAAA-MM-DD (ISO)
-const formatDateToISO = (dateStr: string) => {
-    if (!dateStr || !/^\d{2}\/\d{2}\/\d{4}$/.test(dateStr)) return undefined;
+    const formatDateToISO = (dateStr: string) => {
+        if (!dateStr || !/^\d{2}\/\d{2}\/\d{4}$/.test(dateStr)) return undefined;
 
-    const parts = dateStr.split('/');
-    const day = parts[0];
-    const month = parts[1];
-    const year = parts[2];
+        const parts = dateStr.split('/');
+        const day = parts[0];
+        const month = parts[1];
+        const year = parts[2];
 
-    return `${year}-${month}-${day}`;
-};
+        return `${year}-${month}-${day}`;
+    };
 
-// Mostrar o modal automaticamente apenas quando o status começar com 'pending'
-const isPendingStatus = (s?: string) => !!s && /^pending/.test(s);
-const needsAll = !isLoading && isPendingStatus(sellerStatus?.status);
-React.useEffect(() => {
-    if (needsAll) {
-        console.log('🔍 Seller não está ativo, pedindo todos os dados (cobrança + cartão).');
-        setShowModal(true);
-    }
-}, [needsAll]);
-
-// Prefill automático dos dados do seller quando disponível (sem pedir ID manual)
-React.useEffect(() => {
-    if (!sellerStatus) return;
-    // Tenta extrair nome/email/cpf de diferentes caminhos
-    const data: any = sellerStatus;
-    const storeName = data.store_name || data.name || '';
-    const storeEmail = data.store_email || data.email || '';
-    const cpf = (data.cpfCnpj
-        || data.userData?.cpfCnpj
-        || data.user?.userData?.cpfCnpj
-        || '').toString();
-
-    // Obter data de nascimento caso exista
-    let birthDate = '';
-    if (data.userData?.birthDate) {
-        // Converter para formato DD/MM/AAAA se estiver em outro formato
-        const dateObj = new Date(data.userData.birthDate);
-        if (!isNaN(dateObj.getTime())) {
-            const day = String(dateObj.getDate()).padStart(2, '0');
-            const month = String(dateObj.getMonth() + 1).padStart(2, '0');
-            const year = dateObj.getFullYear();
-            birthDate = `${day}/${month}/${year}`;
+    // Mostrar o modal automaticamente apenas quando o status começar com 'pending'
+    const isPendingStatus = (s?: string) => !!s && /^pending/.test(s);
+    const needsAll = !isLoading && isPendingStatus(sellerStatus?.status);
+    React.useEffect(() => {
+        if (needsAll) {
+            console.log('🔍 Seller não está ativo, pedindo todos os dados (cobrança + cartão).');
+            setShowModal(true);
         }
-    }
+    }, [needsAll]);
 
-    // Obter valor de renda caso exista
-    const incomeValue = data.userData?.income_value || data.incomeValue || '';
+    // Prefill automático dos dados do seller quando disponível (sem pedir ID manual)
+    React.useEffect(() => {
+        if (!sellerStatus) return;
+        // Tenta extrair nome/email/cpf de diferentes caminhos
+        const data: any = sellerStatus;
+        const storeName = data.store_name || data.name || '';
+        const storeEmail = data.store_email || data.email || '';
+        const cpf = (data.cpfCnpj
+            || data.userData?.cpfCnpj
+            || data.user?.userData?.cpfCnpj
+            || '').toString();
 
-    setBilling((prev) => ({
-        ...prev,
-        name: prev.name || storeName,
-        email: prev.email || storeEmail,
-        cpfCnpj: prev.cpfCnpj || cpf,
-        birthDate: prev.birthDate || birthDate,
-        incomeValue: prev.incomeValue || (incomeValue ? formatCurrency(incomeValue.toString()) : ''),
-    }));
-}, [sellerStatus]);
+        // Obter data de nascimento caso exista
+        let birthDate = '';
+        if (data.userData?.birthDate) {
+            // Converter para formato DD/MM/AAAA se estiver em outro formato
+            const dateObj = new Date(data.userData.birthDate);
+            if (!isNaN(dateObj.getTime())) {
+                const day = String(dateObj.getDate()).padStart(2, '0');
+                const month = String(dateObj.getMonth() + 1).padStart(2, '0');
+                const year = dateObj.getFullYear();
+                birthDate = `${day}/${month}/${year}`;
+            }
+        }
 
-// Validação dos dados de cobrança (incluindo novos campos)
-const [billingErrors, setBillingErrors] = useState<{
-    cpfCnpj?: string;
-    address?: string;
-    addressNumber?: string;
-    province?: string;
-    postalCode?: string;
-    birthDate?: string;
-    incomeValue?: string;
-}>({});
+        // Obter valor de renda caso exista
+        const incomeValue = data.userData?.income_value || data.incomeValue || '';
 
-// Estado para armazenar erro da API
-const [apiError, setApiError] = useState<string>('');
+        setBilling((prev) => ({
+            ...prev,
+            name: prev.name || storeName,
+            email: prev.email || storeEmail,
+            cpfCnpj: prev.cpfCnpj || cpf,
+            birthDate: prev.birthDate || birthDate,
+            incomeValue: prev.incomeValue || (incomeValue ? formatCurrency(incomeValue.toString()) : ''),
+        }));
+    }, [sellerStatus]);
 
-useEffect(() => {
-    const errors: {
+    // Validação dos dados de cobrança (incluindo novos campos)
+    const [billingErrors, setBillingErrors] = useState<{
         cpfCnpj?: string;
         address?: string;
         addressNumber?: string;
@@ -220,309 +206,323 @@ useEffect(() => {
         postalCode?: string;
         birthDate?: string;
         incomeValue?: string;
-    } = {};
+    }>({});
 
-    // Validar CPF/CNPJ
-    const cpfDigits = onlyDigits(billing.cpfCnpj);
-    if (cpfDigits && cpfDigits.length !== 11 && cpfDigits.length !== 14) {
-        errors.cpfCnpj = 'CPF/CNPJ inválido';
-    }
+    // Estado para armazenar erro da API
+    const [apiError, setApiError] = useState<string>('');
 
-    // Validar endereço (obrigatório)
-    if (!billing.address || billing.address.trim().length < 2) {
-        errors.address = 'Endereço é obrigatório';
-    }
+    useEffect(() => {
+        const errors: {
+            cpfCnpj?: string;
+            address?: string;
+            addressNumber?: string;
+            province?: string;
+            postalCode?: string;
+            birthDate?: string;
+            incomeValue?: string;
+        } = {};
 
-    // Validar número (obrigatório)
-    if (!billing.addressNumber || billing.addressNumber.trim().length === 0) {
-        errors.addressNumber = 'Número é obrigatório';
-    }
-
-    // Validar bairro (obrigatório)
-    if (!billing.province || billing.province.trim().length < 2) {
-        errors.province = 'Bairro é obrigatório';
-    }
-
-    // Validar CEP (obrigatório)
-    const cepDigits = onlyDigits(billing.postalCode);
-    if (!cepDigits || cepDigits.length !== 8) {
-        errors.postalCode = 'CEP inválido (deve ter 8 dígitos)';
-    }
-
-    // Validar data de nascimento (obrigatória para CPF)
-    if (cpfDigits && cpfDigits.length === 11) {
-        if (!billing.birthDate || !/^\d{2}\/\d{2}\/\d{4}$/.test(billing.birthDate)) {
-            errors.birthDate = 'Data de nascimento obrigatória para CPF';
+        // Validar CPF/CNPJ
+        const cpfDigits = onlyDigits(billing.cpfCnpj);
+        if (cpfDigits && cpfDigits.length !== 11 && cpfDigits.length !== 14) {
+            errors.cpfCnpj = 'CPF/CNPJ inválido';
         }
-    }
 
-    // Validar valor de renda (obrigatório)
-    if (!billing.incomeValue) {
-        errors.incomeValue = 'Renda mensal é obrigatória';
-    } else {
-        // Remover formatação e verificar se é um valor numérico positivo
-        const valueNumber = parseFloat(billing.incomeValue.replace(/\D/g, '')) / 100;
-        if (isNaN(valueNumber) || valueNumber <= 0) {
-            errors.incomeValue = 'Valor deve ser maior que zero';
+        // Validar endereço (obrigatório)
+        if (!billing.address || billing.address.trim().length < 2) {
+            errors.address = 'Endereço é obrigatório';
         }
-    }
 
-    setBillingErrors(errors);
-}, [billing]);
+        // Validar número (obrigatório)
+        if (!billing.addressNumber || billing.addressNumber.trim().length === 0) {
+            errors.addressNumber = 'Número é obrigatório';
+        }
 
-// Tela única: não há mais envio separado de CPF
-// Validação reativa dos campos do cartão
-useEffect(() => {
-    const errors: any = {};
-    const numberDigits = onlyDigits(card.number);
-    // número: só mostra obrigatório se o usuário já tocou no campo ou se já digitou algo
-    if (!numberDigits) {
-        if (cardTouched.number) errors.number = 'Número do cartão obrigatório';
-    } else if (numberDigits.length !== 16) errors.number = 'Número deve ter 16 dígitos';
-    else if (!luhnCheck(numberDigits)) errors.number = 'Número inválido';
+        // Validar bairro (obrigatório)
+        if (!billing.province || billing.province.trim().length < 2) {
+            errors.province = 'Bairro é obrigatório';
+        }
 
-    // Expiry (formato MM/AA) — validação só após interação ou se houver valor
-    const expRaw = card.expiry || '';
-    const exp = expRaw.replace(/\s/g, '');
-    if (expRaw || cardTouched.expiry) {
-        if (!/^\d{2}\/\d{2}$/.test(exp)) {
-            errors.expiry = 'Validade inválida (MM/AA)';
-        } else {
-            const mm = parseInt(exp.slice(0, 2), 10);
-            const yy = parseInt(exp.slice(3), 10);
-            if (isNaN(mm) || mm < 1 || mm > 12) errors.expiry = 'Mês inválido';
-            else {
-                const fullYear = 2000 + yy;
-                const now = new Date();
-                const expDate = new Date(fullYear, mm - 1, 1);
-                expDate.setMonth(expDate.getMonth() + 1);
-                if (expDate <= now) errors.expiry = 'Cartão vencido';
+        // Validar CEP (obrigatório)
+        const cepDigits = onlyDigits(billing.postalCode);
+        if (!cepDigits || cepDigits.length !== 8) {
+            errors.postalCode = 'CEP inválido (deve ter 8 dígitos)';
+        }
+
+        // Validar data de nascimento (obrigatória para CPF)
+        if (cpfDigits && cpfDigits.length === 11) {
+            if (!billing.birthDate || !/^\d{2}\/\d{2}\/\d{4}$/.test(billing.birthDate)) {
+                errors.birthDate = 'Data de nascimento obrigatória para CPF';
             }
         }
-    }
 
-    // CVV — só valida após interação
-    if (cardTouched.ccv || card.ccv) {
-        if (!/^[0-9]{3,4}$/.test(card.ccv)) errors.ccv = 'CVV deve ter 3 ou 4 dígitos (4 recomendado)';
-    }
+        // Validar valor de renda (obrigatório)
+        if (!billing.incomeValue) {
+            errors.incomeValue = 'Renda mensal é obrigatória';
+        } else {
+            // Remover formatação e verificar se é um valor numérico positivo
+            const valueNumber = parseFloat(billing.incomeValue.replace(/\D/g, '')) / 100;
+            if (isNaN(valueNumber) || valueNumber <= 0) {
+                errors.incomeValue = 'Valor deve ser maior que zero';
+            }
+        }
 
-    if (cardTouched.holderName || card.holderName) {
-        if (!card.holderName || card.holderName.trim().length < 2) errors.holderName = 'Nome do titular inválido';
-    }
+        setBillingErrors(errors);
+    }, [billing]);
 
-    setCardErrors(errors);
-    setIsCardValid(Object.keys(errors).length === 0 && !!onlyDigits(card.number));
-}, [card, cardTouched]);
+    // Tela única: não há mais envio separado de CPF
+    // Validação reativa dos campos do cartão
+    useEffect(() => {
+        const errors: any = {};
+        const numberDigits = onlyDigits(card.number);
+        // número: só mostra obrigatório se o usuário já tocou no campo ou se já digitou algo
+        if (!numberDigits) {
+            if (cardTouched.number) errors.number = 'Número do cartão obrigatório';
+        } else if (numberDigits.length !== 16) errors.number = 'Número deve ter 16 dígitos';
+        else if (!luhnCheck(numberDigits)) errors.number = 'Número inválido';
 
-const handleSubmitCard = async () => {
-    // Limpar erro anterior
-    setApiError('');
+        // Expiry (formato MM/AA) — validação só após interação ou se houver valor
+        const expRaw = card.expiry || '';
+        const exp = expRaw.replace(/\s/g, '');
+        if (expRaw || cardTouched.expiry) {
+            if (!/^\d{2}\/\d{2}$/.test(exp)) {
+                errors.expiry = 'Validade inválida (MM/AA)';
+            } else {
+                const mm = parseInt(exp.slice(0, 2), 10);
+                const yy = parseInt(exp.slice(3), 10);
+                if (isNaN(mm) || mm < 1 || mm > 12) errors.expiry = 'Mês inválido';
+                else {
+                    const fullYear = 2000 + yy;
+                    const now = new Date();
+                    const expDate = new Date(fullYear, mm - 1, 1);
+                    expDate.setMonth(expDate.getMonth() + 1);
+                    if (expDate <= now) errors.expiry = 'Cartão vencido';
+                }
+            }
+        }
 
-    // Montar payload conforme especificação
-    const payload = {
-        planData: {
-            plan_name: 'Plano Pro',
-            value: 29.9,
-            cycle: 'MONTHLY',
-        },
-        billingInfo: {
-            billingType: 'CREDIT_CARD' as const,
-            name: billing.name,
-            email: billing.email,
-            cpfCnpj: onlyDigits(billing.cpfCnpj),
-            phone: billing.phone,
-            creditCard: {
-                holderName: card.holderName,
-                number: onlyDigits(card.number),
-                expiryMonth: (() => {
-                    const exp = card.expiry || '';
-                    if (!/\d{2}\/\d{2}/.test(exp)) return '';
-                    return exp.slice(0, 2);
-                })(),
-                expiryYear: (() => {
-                    const exp = card.expiry || '';
-                    if (!/\d{2}\/\d{2}/.test(exp)) return '';
-                    const yy = parseInt(exp.slice(3), 10);
-                    if (Number.isNaN(yy)) return '';
-                    return String(2000 + yy);
-                })(),
-                ccv: onlyDigits(card.ccv),
+        // CVV — só valida após interação
+        if (cardTouched.ccv || card.ccv) {
+            if (!/^[0-9]{3,4}$/.test(card.ccv)) errors.ccv = 'CVV deve ter 3 ou 4 dígitos (4 recomendado)';
+        }
+
+        if (cardTouched.holderName || card.holderName) {
+            if (!card.holderName || card.holderName.trim().length < 2) errors.holderName = 'Nome do titular inválido';
+        }
+
+        setCardErrors(errors);
+        setIsCardValid(Object.keys(errors).length === 0 && !!onlyDigits(card.number));
+    }, [card, cardTouched]);
+
+    const handleSubmitCard = async () => {
+        // Limpar erro anterior
+        setApiError('');
+
+        // Montar payload conforme especificação
+        const payload = {
+            planData: {
+                plan_name: 'Plano Pro',
+                value: 29.9,
+                cycle: 'MONTHLY',
             },
-            // Envia Holder Info recomendado para antifraude
-            creditCardHolderInfo: {
-                name: billing.name || card.holderName,
+            billingInfo: {
+                billingType: 'CREDIT_CARD' as const,
+                name: billing.name,
                 email: billing.email,
                 cpfCnpj: onlyDigits(billing.cpfCnpj),
-                mobilePhone: billing.phone,
-                address: billing.address || undefined,
-                addressNumber: billing.addressNumber || undefined,
-                complement: billing.complement || undefined,
-                province: billing.province || undefined,
-                postalCode: onlyDigits(billing.postalCode) || undefined,
-                birthDate: billing.birthDate ? formatDateToISO(billing.birthDate) : undefined, // Converte DD/MM/AAAA para ISO (AAAA-MM-DD)
-                incomeValue: billing.incomeValue ? parseFloat(billing.incomeValue.replace(/\D/g, '')) / 100 : undefined, // Converte string R$ para número
+                phone: billing.phone,
+                creditCard: {
+                    holderName: card.holderName,
+                    number: onlyDigits(card.number),
+                    expiryMonth: (() => {
+                        const exp = card.expiry || '';
+                        if (!/\d{2}\/\d{2}/.test(exp)) return '';
+                        return exp.slice(0, 2);
+                    })(),
+                    expiryYear: (() => {
+                        const exp = card.expiry || '';
+                        if (!/\d{2}\/\d{2}/.test(exp)) return '';
+                        const yy = parseInt(exp.slice(3), 10);
+                        if (Number.isNaN(yy)) return '';
+                        return String(2000 + yy);
+                    })(),
+                    ccv: onlyDigits(card.ccv),
+                },
+                // Envia Holder Info recomendado para antifraude
+                creditCardHolderInfo: {
+                    name: billing.name || card.holderName,
+                    email: billing.email,
+                    cpfCnpj: onlyDigits(billing.cpfCnpj),
+                    mobilePhone: billing.phone,
+                    address: billing.address || undefined,
+                    addressNumber: billing.addressNumber || undefined,
+                    complement: billing.complement || undefined,
+                    province: billing.province || undefined,
+                    postalCode: onlyDigits(billing.postalCode) || undefined,
+                    birthDate: billing.birthDate ? formatDateToISO(billing.birthDate) : undefined, // Converte DD/MM/AAAA para ISO (AAAA-MM-DD)
+                    incomeValue: billing.incomeValue ? parseFloat(billing.incomeValue.replace(/\D/g, '')) / 100 : undefined, // Converte string R$ para número
+                },
             },
-        },
+        };
+
+        const res = await createSellerSubscription(payload);
+        if (res.success) {
+            // Fecha modal apenas quando assinatura concluída com sucesso
+            setShowModal(false);
+        } else {
+            // Mostra erro da API no banner
+            setApiError(res.error?.message || 'Erro ao criar assinatura. Tente novamente.');
+        }
     };
 
-    const res = await createSellerSubscription(payload);
-    if (res.success) {
-        // Fecha modal apenas quando assinatura concluída com sucesso
-        setShowModal(false);
-    } else {
-        // Mostra erro da API no banner
-        setApiError(res.error?.message || 'Erro ao criar assinatura. Tente novamente.');
-    }
-};
+    // Bloqueia fechar enquanto status não for 'active'
+    const canDismiss = !needsAll;
 
-// Bloqueia fechar enquanto status não for 'active'
-const canDismiss = !needsAll;
+    return (
+        <>
+            {showModal && (
+                <Modal open={showModal} onDismiss={canDismiss ? () => setShowModal(false) : undefined}>
+                    <Modal.Header>
+                        <Text fontWeight="bold">Finalizar assinatura do Seller</Text>
+                    </Modal.Header>
+                    <Modal.Body style={{ maxHeight: '70vh', overflowY: 'auto' }}>
+                        <Box display="flex" flexDirection="column" gap="4">
+                            {apiError && (
+                                <Box
+                                    padding="3"
+                                    backgroundColor="danger-surface"
+                                    borderRadius="1"
+                                    style={{ borderLeft: '4px solid #d32f2f', paddingLeft: 16 }}
+                                >
+                                    <Text color="danger-textHigh" fontWeight="medium">
+                                        ⚠️ Erro: {apiError}
+                                    </Text>
+                                </Box>
+                            )}
+                            <Box>
+                                <Text fontWeight="medium">Status atual:</Text>
+                                <Box padding="2" backgroundColor="neutral-surface" borderRadius="1">
+                                    <Text>{translateSellerStatus(sellerStatus?.status)}</Text>
+                                </Box>
+                            </Box>
+                            {needsAll && (
+                                <Box display="flex" flexDirection="column" gap="2">
+                                    <Text fontWeight="medium">Dados de cobrança</Text>
+                                    <Input placeholder="Nome" value={billing.name} onChange={(e) => setBilling({ ...billing, name: e.target.value })} />
+                                    <Input placeholder="Email" value={billing.email} onChange={(e) => setBilling({ ...billing, email: e.target.value })} />
+                                    <Input
+                                        placeholder="CPF/CNPJ"
+                                        value={billing.cpfCnpj}
+                                        onChange={(e) => setBilling({ ...billing, cpfCnpj: formatCpfCnpj(e.target.value) })}
+                                    />
+                                    {billingErrors.cpfCnpj && <Text color="danger-textHigh" fontSize="caption">{billingErrors.cpfCnpj}</Text>}
+                                    <Input
+                                        placeholder="Telefone"
+                                        value={billing.phone}
+                                        onChange={(e) => setBilling({ ...billing, phone: formatPhone(e.target.value) })}
+                                    />
+                                    <Input
+                                        placeholder="CEP"
+                                        value={billing.postalCode}
+                                        onChange={(e) => setBilling({ ...billing, postalCode: formatPostalCode(e.target.value) })}
+                                    />
+                                    <Input
+                                        placeholder="Endereço"
+                                        value={billing.address}
+                                        onChange={(e) => setBilling({ ...billing, address: e.target.value })}
+                                    />
+                                    {billingErrors.address && <Text color="danger-textHigh" fontSize="caption">{billingErrors.address}</Text>}
+                                    <Box display="flex" gap="2">
+                                        <Input
+                                            placeholder="Número"
+                                            value={billing.addressNumber}
+                                            onChange={(e) => setBilling({ ...billing, addressNumber: e.target.value })}
+                                            style={{ flex: 1 }}
+                                        />
+                                        <Input
+                                            placeholder="Complemento"
+                                            value={billing.complement}
+                                            onChange={(e) => setBilling({ ...billing, complement: e.target.value })}
+                                            style={{ flex: 1 }}
+                                        />
+                                    </Box>
+                                    {billingErrors.addressNumber && <Text color="danger-textHigh" fontSize="caption">{billingErrors.addressNumber}</Text>}
+                                    <Input
+                                        placeholder="Bairro"
+                                        value={billing.province}
+                                        onChange={(e) => setBilling({ ...billing, province: e.target.value })}
+                                    />
+                                    {billingErrors.province && <Text color="danger-textHigh" fontSize="caption">{billingErrors.province}</Text>}
+                                    <Input
+                                        placeholder="Data de Nascimento (DD/MM/AAAA) - Obrigatório para CPF"
+                                        value={billing.birthDate || ''}
+                                        onChange={(e) => setBilling({ ...billing, birthDate: formatBirthDate(e.target.value) })}
+                                    />
+                                    {billingErrors.birthDate && <Text color="danger-textHigh" fontSize="caption">{billingErrors.birthDate}</Text>}
+                                    <Input
+                                        placeholder="Renda Mensal (R$) - Obrigatório"
+                                        value={billing.incomeValue || ''}
+                                        onChange={(e) => setBilling({ ...billing, incomeValue: formatCurrency(e.target.value) })}
+                                    />
+                                    {billingErrors.incomeValue && <Text color="danger-textHigh" fontSize="caption">{billingErrors.incomeValue}</Text>}
+                                    {/* IP remoto não deve ser coletado no front. O backend deve inferir do request. */}
 
-return (
-    <>
-        {showModal && (
-            <Modal open={showModal} onDismiss={canDismiss ? () => setShowModal(false) : undefined}>
-                <Modal.Header>
-                    <Text fontWeight="bold">Finalizar assinatura do Seller</Text>
-                </Modal.Header>
-                <Modal.Body style={{ maxHeight: '70vh', overflowY: 'auto' }}>
-                    <Box display="flex" flexDirection="column" gap="4">
-                        {apiError && (
-                            <Box
-                                padding="3"
-                                backgroundColor="danger-surface"
-                                borderRadius="1"
-                                style={{ borderLeft: '4px solid #d32f2f', paddingLeft: 16 }}
-                            >
-                                <Text color="danger-textHigh" fontWeight="medium">
-                                    ⚠️ Erro: {apiError}
-                                </Text>
-                            </Box>
-                        )}
-                        <Box>
-                            <Text fontWeight="medium">Status atual:</Text>
-                            <Box padding="2" backgroundColor="neutral-surface" borderRadius="1">
-                                <Text>{translateSellerStatus(sellerStatus?.status)}</Text>
-                            </Box>
-                        </Box>
-                        {needsAll && (
-                            <Box display="flex" flexDirection="column" gap="2">
-                                <Text fontWeight="medium">Dados de cobrança</Text>
-                                <Input placeholder="Nome" value={billing.name} onChange={(e) => setBilling({ ...billing, name: e.target.value })} />
-                                <Input placeholder="Email" value={billing.email} onChange={(e) => setBilling({ ...billing, email: e.target.value })} />
-                                <Input
-                                    placeholder="CPF/CNPJ"
-                                    value={billing.cpfCnpj}
-                                    onChange={(e) => setBilling({ ...billing, cpfCnpj: formatCpfCnpj(e.target.value) })}
-                                />
-                                {billingErrors.cpfCnpj && <Text color="danger-textHigh" fontSize="caption">{billingErrors.cpfCnpj}</Text>}
-                                <Input
-                                    placeholder="Telefone"
-                                    value={billing.phone}
-                                    onChange={(e) => setBilling({ ...billing, phone: formatPhone(e.target.value) })}
-                                />
-                                <Input
-                                    placeholder="CEP"
-                                    value={billing.postalCode}
-                                    onChange={(e) => setBilling({ ...billing, postalCode: formatPostalCode(e.target.value) })}
-                                />
-                                <Input
-                                    placeholder="Endereço"
-                                    value={billing.address}
-                                    onChange={(e) => setBilling({ ...billing, address: e.target.value })}
-                                />
-                                {billingErrors.address && <Text color="danger-textHigh" fontSize="caption">{billingErrors.address}</Text>}
-                                <Box display="flex" gap="2">
+                                    <Text fontWeight="medium">Cartão</Text>
+                                    <Input placeholder="Titular" value={card.holderName} onChange={(e) => setCard({ ...card, holderName: e.target.value })} />
+                                    {cardErrors.holderName && <Text color="danger-textHigh" fontSize="caption">{cardErrors.holderName}</Text>}
                                     <Input
                                         placeholder="Número"
-                                        value={billing.addressNumber}
-                                        onChange={(e) => setBilling({ ...billing, addressNumber: e.target.value })}
-                                        style={{ flex: 1 }}
+                                        value={card.number}
+                                        onChange={(e) => setCard({ ...card, number: formatCardNumber(e.target.value) })}
+                                        onBlur={() => setCardTouched({ ...cardTouched, number: true })}
                                     />
-                                    <Input
-                                        placeholder="Complemento"
-                                        value={billing.complement}
-                                        onChange={(e) => setBilling({ ...billing, complement: e.target.value })}
-                                        style={{ flex: 1 }}
-                                    />
+                                    {cardErrors.number && <Text color="danger-textHigh" fontSize="caption">{cardErrors.number}</Text>}
+                                    <Box display="flex" gap="2">
+                                        <Input
+                                            placeholder="MM/AA"
+                                            value={card.expiry}
+                                            onChange={(e) => setCard({ ...card, expiry: formatExpiry(e.target.value) })}
+                                            onBlur={() => setCardTouched({ ...cardTouched, expiry: true })}
+                                        />
+                                        <Input
+                                            placeholder="CVV"
+                                            value={card.ccv}
+                                            onChange={(e) => setCard({ ...card, ccv: onlyDigits(e.target.value).slice(0, 4) })}
+                                            onBlur={() => setCardTouched({ ...cardTouched, ccv: true })}
+                                        />
+                                    </Box>
+                                    {cardErrors.expiry && <Text color="danger-textHigh" fontSize="caption">{cardErrors.expiry}</Text>}
+                                    {cardErrors.ccv && <Text color="danger-textHigh" fontSize="caption">{cardErrors.ccv}</Text>}
+
+                                    <Button
+                                        appearance="primary"
+                                        onClick={handleSubmitCard}
+                                        disabled={isSubmitting || !isCardValid || Object.keys(billingErrors).length > 0}
+                                    >
+                                        {isSubmitting ? 'Enviando...' : 'Pagar e ativar assinatura'}
+                                    </Button>
                                 </Box>
-                                {billingErrors.addressNumber && <Text color="danger-textHigh" fontSize="caption">{billingErrors.addressNumber}</Text>}
-                                <Input
-                                    placeholder="Bairro"
-                                    value={billing.province}
-                                    onChange={(e) => setBilling({ ...billing, province: e.target.value })}
-                                />
-                                {billingErrors.province && <Text color="danger-textHigh" fontSize="caption">{billingErrors.province}</Text>}
-                                <Input
-                                    placeholder="Data de Nascimento (DD/MM/AAAA) - Obrigatório para CPF"
-                                    value={billing.birthDate || ''}
-                                    onChange={(e) => setBilling({ ...billing, birthDate: formatBirthDate(e.target.value) })}
-                                />
-                                {billingErrors.birthDate && <Text color="danger-textHigh" fontSize="caption">{billingErrors.birthDate}</Text>}
-                                <Input
-                                    placeholder="Renda Mensal (R$) - Obrigatório"
-                                    value={billing.incomeValue || ''}
-                                    onChange={(e) => setBilling({ ...billing, incomeValue: formatCurrency(e.target.value) })}
-                                />
-                                {billingErrors.incomeValue && <Text color="danger-textHigh" fontSize="caption">{billingErrors.incomeValue}</Text>}
-                                {/* IP remoto não deve ser coletado no front. O backend deve inferir do request. */}
+                            )}
+                        </Box>
+                    </Modal.Body>
+                    {!canDismiss && (
+                        <Modal.Footer>
+                            <Text color="danger-textLow">Finalize para continuar. O fechamento está bloqueado.</Text>
+                        </Modal.Footer>
+                    )}
+                </Modal>
+            )}
 
-                                <Text fontWeight="medium">Cartão</Text>
-                                <Input placeholder="Titular" value={card.holderName} onChange={(e) => setCard({ ...card, holderName: e.target.value })} />
-                                {cardErrors.holderName && <Text color="danger-textHigh" fontSize="caption">{cardErrors.holderName}</Text>}
-                                <Input
-                                    placeholder="Número"
-                                    value={card.number}
-                                    onChange={(e) => setCard({ ...card, number: formatCardNumber(e.target.value) })}
-                                    onBlur={() => setCardTouched({ ...cardTouched, number: true })}
-                                />
-                                {cardErrors.number && <Text color="danger-textHigh" fontSize="caption">{cardErrors.number}</Text>}
-                                <Box display="flex" gap="2">
-                                    <Input
-                                        placeholder="MM/AA"
-                                        value={card.expiry}
-                                        onChange={(e) => setCard({ ...card, expiry: formatExpiry(e.target.value) })}
-                                        onBlur={() => setCardTouched({ ...cardTouched, expiry: true })}
-                                    />
-                                    <Input
-                                        placeholder="CVV"
-                                        value={card.ccv}
-                                        onChange={(e) => setCard({ ...card, ccv: onlyDigits(e.target.value).slice(0, 4) })}
-                                        onBlur={() => setCardTouched({ ...cardTouched, ccv: true })}
-                                    />
-                                </Box>
-                                {cardErrors.expiry && <Text color="danger-textHigh" fontSize="caption">{cardErrors.expiry}</Text>}
-                                {cardErrors.ccv && <Text color="danger-textHigh" fontSize="caption">{cardErrors.ccv}</Text>}
-
-                                <Button
-                                    appearance="primary"
-                                    onClick={handleSubmitCard}
-                                    disabled={isSubmitting || !isCardValid || Object.keys(billingErrors).length > 0}
-                                >
-                                    {isSubmitting ? 'Enviando...' : 'Pagar e ativar assinatura'}
-                                </Button>
-                            </Box>
-                        )}
-                    </Box>
-                </Modal.Body>
-                {!canDismiss && (
-                    <Modal.Footer>
-                        <Text color="danger-textLow">Finalize para continuar. O fechamento está bloqueado.</Text>
-                    </Modal.Footer>
-                )}
-            </Modal>
-        )}
-
-        {import.meta.env.DEV && (
-            <Box position="fixed" bottom="0" right="0" backgroundColor="neutral-surface" padding="2" borderRadius="1" margin="2">
-                <Text fontWeight="bold" fontSize="caption">Debug - Seller Status:</Text>
-                <Text fontSize="caption">Status: {sellerStatus?.status || 'Loading...'}</Text>
-                <Text fontSize="caption">Needs All: {needsAll ? 'Yes' : 'No'}</Text>
-                <Text fontSize="caption">Loading: {isLoading ? 'Yes' : 'No'}</Text>
-            </Box>
-        )}
-    </>
-);
+            {import.meta.env.DEV && (
+                <Box position="fixed" bottom="0" right="0" backgroundColor="neutral-surface" padding="2" borderRadius="1" margin="2">
+                    <Text fontWeight="bold" fontSize="caption">Debug - Seller Status:</Text>
+                    <Text fontSize="caption">Status: {sellerStatus?.status || 'Loading...'}</Text>
+                    <Text fontSize="caption">Needs All: {needsAll ? 'Yes' : 'No'}</Text>
+                    <Text fontSize="caption">Loading: {isLoading ? 'Yes' : 'No'}</Text>
+                </Box>
+            )}
+        </>
+    );
 };
 
 export default SellerStatusChecker;
