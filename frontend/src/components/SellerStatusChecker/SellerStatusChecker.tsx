@@ -136,9 +136,8 @@ const SellerStatusChecker: React.FC = () => {
 
         return statusTranslations[status?.toLowerCase() || ''] || status || 'Desconhecido';
     };
-};
 
-// Converte data de formato DD/MM/AAAA para AAAA-MM-DD (ISO)
+    // Converte data de formato DD/MM/AAAA para AAAA-MM-DD (ISO)
 const formatDateToISO = (dateStr: string) => {
     if (!dateStr || !/^\d{2}\/\d{2}\/\d{4}$/.test(dateStr)) return undefined;
 
